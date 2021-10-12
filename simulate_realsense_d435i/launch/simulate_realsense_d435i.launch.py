@@ -14,6 +14,8 @@
 
 # /* Author: Doron Hirshberg */
 import os
+import xacro
+import tempfile
 import launch
 from launch_ros.actions import Node
 from launch.actions import ExecuteProcess, IncludeLaunchDescription
@@ -22,21 +24,35 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from ament_index_python.packages import get_package_share_directory
 import sys
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
-from launch_utils import to_urdf
+
+
+def to_urdf(xacro_path, parameters=None):
+    """Convert the given xacro file to URDF file.
+    * xacro_path -- the path to the xacro file
+    * parameters -- to be used when xacro file is parsed.
+    """
+    urdf_path = tempfile.mktemp(prefix="%s_" % os.path.basename(xacro_path))
+
+    # open and process file
+    doc = xacro.process_file(xacro_path, mappings=parameters)
+    # open the output file
+    out = xacro.open_output(urdf_path)
+    out.write(doc.toprettyxml(indent='  '))
+
+    return urdf_path
 
 
 def generate_launch_description():
-    TURTLEBOT3_MODEL = 'realsense'
+    TURTLEBOT3_WORLD = 'empty_world'
     REALSENSE_MODEL = 'test_d435i_camera.urdf.xacro'
-    rviz_config_dir = os.path.join(get_package_share_directory('realsense2_description'), 'rviz', 'urdf2.rviz')
+    
+    rviz_config_dir = os.path.join(get_package_share_directory('simulate_realsense_d435i'), 'rviz', 'urdf.rviz')
     xacro_path = os.path.join(get_package_share_directory('realsense2_description'), 'urdf', REALSENSE_MODEL)
     use_sim_time = LaunchConfiguration('use_sim_time', default='True')
     urdf = to_urdf(xacro_path, {'use_nominal_extrinsics' : 'true', 'add_plug' : 'true', 'use_sim_time': use_sim_time})
     
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
-    world_file_name = 'empty_worlds/' + TURTLEBOT3_MODEL + '.model'
-    world = os.path.join(get_package_share_directory('turtlebot3_gazebo'), 'worlds', world_file_name)
-    launch_file_dir = os.path.join(get_package_share_directory('turtlebot3_gazebo'), 'launch')
+    world = os.path.join(get_package_share_directory('simulate_realsense_d435i'), 'worlds', TURTLEBOT3_WORLD + '.model')
     
     rviz_node = Node(
         package='rviz2',
@@ -69,15 +85,11 @@ def generate_launch_description():
         cmd=['ros2', 'param', 'set', '/gazebo', 'use_sim_time', use_sim_time],
         output='screen'
         )
-    """ robot_state_publisher = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([launch_file_dir, '/robot_state_publisher.launch.py']),
-        launch_arguments={'use_sim_time': use_sim_time}.items(),
-        )"""
     return launch.LaunchDescription([
         rviz_node,
         model_node,
         gazebo_server,
         gazebo_client,
         gazebo_sim,
-        # robot_state_publisher,
         ])
+   
