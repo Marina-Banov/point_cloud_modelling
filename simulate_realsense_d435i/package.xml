@@ -6,7 +6,12 @@
   <description>This package uses a Turtlebot3 robot with an Intel Realsense D435i depth camera and tries to create pointclouds of Gazebo environments.</description>
   <maintainer email="m.banov7@gmail.com">Marina Banov</maintainer>
   <license>TODO: License declaration</license>
-
+  
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>numpy</exec_depend>
+  <exec_depend>open3d</exec_depend>
+  
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>

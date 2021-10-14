@@ -34,6 +34,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'get_pcd = simulate_realsense_d435i.get_pcd:main',
         ],
     },
 )
