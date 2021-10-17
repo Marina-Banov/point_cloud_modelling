@@ -43,16 +43,16 @@ def to_urdf(xacro_path, parameters=None):
 
 
 def generate_launch_description():
-    TURTLEBOT3_WORLD = 'empty_world'
-    REALSENSE_MODEL = 'test_d435i_camera.urdf.xacro'
+    SIMULATE_WORLD = 'empty_world'
+    SIMULATE_MODEL = 'turtlebot3_burger.urdf.xacro'
     
     rviz_config_dir = os.path.join(get_package_share_directory('simulate_realsense_d435i'), 'rviz', 'urdf.rviz')
-    xacro_path = os.path.join(get_package_share_directory('realsense2_description'), 'urdf', REALSENSE_MODEL)
+    xacro_path = os.path.join(get_package_share_directory('simulate_realsense_d435i'), 'urdf', SIMULATE_MODEL)
     use_sim_time = LaunchConfiguration('use_sim_time', default='True')
     urdf = to_urdf(xacro_path, {'use_nominal_extrinsics' : 'true', 'add_plug' : 'true', 'use_sim_time': use_sim_time})
     
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
-    world = os.path.join(get_package_share_directory('simulate_realsense_d435i'), 'worlds', TURTLEBOT3_WORLD + '.model')
+    world = os.path.join(get_package_share_directory('simulate_realsense_d435i'), 'worlds', SIMULATE_WORLD + '.model')
     
     rviz_node = Node(
         package='rviz2',
@@ -86,10 +86,9 @@ def generate_launch_description():
         output='screen'
         )
     return launch.LaunchDescription([
-        rviz_node,
+        # rviz_node,
         model_node,
         gazebo_server,
         gazebo_client,
         gazebo_sim,
         ])
-   

@@ -11,52 +11,41 @@ from tf2_ros.buffer import Buffer
 from tf2_ros import TransformException
 from tf2_ros.transform_listener import TransformListener
 from rclpy.duration import Duration
+from geometry_msgs.msg import Transform, Vector3, Quaternion
 
-CAMERA_TREE = ['camera_bottom_screw_frame', 'camera_link', 'camera_depth_frame','camera_depth_optical_frame']
-source_frame = 'camera_link'
-target_frame = 'camera_depth_optical_frame'
+SOURCE_FRAME_ID = 'odom'
+TARGET_FRAME_ID = 'camera_depth_optical_frame'
+
 
 class GetPcdNode(Node):
     def __init__(self):
         super().__init__('get_pcd')
         self.points = set()
         self.tf_buffer = Buffer()
-        self.tf_listener = TransformListener(self.tf_buffer, self)
-        """self.create_subscription(
+        self.tf_listener = TransformListener(self.tf_buffer, self) # necessary
+        self.camera_sensor_trans = Transform()
+        self.create_subscription(
             PointCloud2,
             '/depth/color/points',
             self.process_frame,
             10
         )
-        self.create_subscription(
-            TFMessage,
-            '/tf',
-            self.y,
-            1
-        )"""
-        self.create_subscription(
-            TFMessage,
-            '/tf_static',
-            self.get_camera_transforms,
-            2
-        )
         
-    def get_camera_transforms(self, data):
+    def get_transform(self, source_frame, target_frame, default_value=None):
         try:
             now = rclpy.time.Time()
             self.tf_buffer.can_transform(target_frame, source_frame, now, Duration(seconds=2))
             trans = self.tf_buffer.lookup_transform(target_frame, source_frame, now)
-            self.get_logger().info(str(trans))
+            self.get_logger().info(f'Successfully transformed {source_frame} to {target_frame}')
+            return trans
         except TransformException as ex:
             self.get_logger().info(f'Could not transform {source_frame} to {target_frame}: {ex}')
-
-    def y(self, data):
-        self.get_logger().info("/tf")
-        self.get_logger().info(str(data.transforms))
+            return default_value
 
     def process_frame(self, data):
         #self.lock.acquire()
         self.get_logger().info(f"Processing frame...")
+        self.camera_sensor_trans = self.get_transform(SOURCE_FRAME_ID, TARGET_FRAME_ID, self.camera_sensor_trans)
         pcd_data = pc2.read_points(data, field_names=['x','y','z'], skip_nans=True)
         # round xyz coordinates of each point to 3 decimal spots
         new_points = list(map(lambda t: tuple(map(lambda x: round(x, 3), t)), list(pcd_data)))
