@@ -67,7 +67,7 @@ class GetPcdNode(Node):
         points = np.around(np.dot(M, points.T), 3).T
         
         # tuples are hashable objects and will cause collisions when added to a set
-        new_points = list(map(lambda t: tuple(tfs.euler_from_quaternion(t)), points))
+        new_points = list(map(lambda t: (t[0], t[1], t[2]), points))
         self.points.update(new_points)
         
         self.get_logger().info(f"Frame processed")
