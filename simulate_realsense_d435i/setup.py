@@ -36,6 +36,7 @@ setup(
     entry_points={
         'console_scripts': [
             'get_pcd = simulate_realsense_d435i.get_pcd:main',
+            'teleop_keyboard = simulate_realsense_d435i.teleop_keyboard:main',
         ],
     },
 )

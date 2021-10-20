@@ -1,6 +1,7 @@
 import sys
 import rclpy
 from rclpy.node import Node
+from std_msgs.msg import Bool
 from sensor_msgs.msg import PointCloud2, PointField
 import numpy as np
 import open3d as o3d
@@ -32,6 +33,17 @@ class GetPcdNode(Node):
             self.process_frame,
             10
         )
+        self.flag = True
+        self.create_subscription(
+            Bool,
+            '/break',
+            self.toggle_flag,
+            10
+        )
+        
+    def toggle_flag(self, data):
+        time.sleep(1)
+        self.flag = True
         
     def get_transform(self, source_frame, target_frame, default_value=None):
         try:
@@ -48,26 +60,30 @@ class GetPcdNode(Node):
         Vq = self.camera_sensor_trans.transform.rotation
         Vt = self.camera_sensor_trans.transform.translation
         Vq = [Vq.w, Vq.x, Vq.y, Vq.z]
-        Vt = [Vt.x, Vt.y, Vt.z]
-        # angle = tfs.euler_from_quaternion(Vq)[2]
-        # return tfs.rotation_matrix(angle, [0,1,0]), tfs.translation_matrix(Vt)
-        return tfs.quaternion_matrix(Vq), tfs.translation_matrix(Vt)
+        Vt = [-Vt.x, -Vt.y, -Vt.z]
+        angles = tfs.euler_from_quaternion(Vq)
+        Rx = tfs.rotation_matrix(3.14159265, [1,0,0])
+        Ry = tfs.rotation_matrix(angles[2], [0,1,0])
+        Rz = tfs.rotation_matrix(0, [0,0,1])
+        return np.around(tfs.concatenate_matrices(Rx, Ry, Rz), 5), np.around(tfs.translation_matrix(Vt), 5)
+        # return tfs.quaternion_matrix(Vq), tfs.translation_matrix(Vt)
 
     def process_frame(self, data):
-        #self.lock.acquire()
+        if not self.flag:
+            return
+        self.flag = False
         self.get_logger().info(f"Processing frame...")
         
         self.camera_sensor_trans = self.get_transform(SOURCE_FRAME_ID, TARGET_FRAME_ID, self.camera_sensor_trans)
-        Rq, Rt = self.get_transform_matrices()
-        M = np.dot(Rq, Rt)
+        Mr, Mt = self.get_transform_matrices()
         
         pcd_data = np.array(list(pc2.read_points(data, field_names=['x','y','z'], skip_nans=True)))
-        points = np.ones((pcd_data.shape[0], 4)) # add the fourth column
-        points[:,:-1] = pcd_data
-        points = np.around(np.dot(M, points.T), 3).T
+        P = np.ones((pcd_data.shape[0], 4)) # add the fourth column
+        P[:,:-1] = pcd_data
+        P = np.around(tfs.concatenate_matrices(Mr, Mt, P.T), 3).T
         
         # tuples are hashable objects and will cause collisions when added to a set
-        new_points = list(map(lambda t: (t[0], t[1], t[2]), points))
+        new_points = list(map(lambda t: (t[0], t[1], t[2]), P))
         self.points.update(new_points)
         
         self.get_logger().info(f"Frame processed")
