@@ -1,23 +1,40 @@
 import sys
-import rclpy
-from rclpy.node import Node
-from std_msgs.msg import Bool
-from sensor_msgs.msg import PointCloud2, PointField
+import time
 import numpy as np
 import open3d as o3d
-from . import point_cloud2 as pc2
-import time
-from tf2_msgs.msg import TFMessage
-from tf2_ros.buffer import Buffer
-from tf2_ros import TransformException
-from tf2_ros.transform_listener import TransformListener
-from rclpy.duration import Duration
-from geometry_msgs.msg import TransformStamped, Vector3, Quaternion
 import transformations as tfs
+import rclpy
+from rclpy.node import Node
+from rclpy.duration import Duration
+from std_msgs.msg import Bool
+from sensor_msgs.msg import PointCloud2, PointField
+from sensor_msgs_py.point_cloud2 import read_points
+from geometry_msgs.msg import TransformStamped, Vector3, Quaternion
+from tf2_ros import TransformException
+from tf2_ros.buffer import Buffer
+from tf2_ros.transform_listener import TransformListener
+from tf2_msgs.msg import TFMessage
 
 
 SOURCE_FRAME_ID = 'odom'
 TARGET_FRAME_ID = 'camera_depth_optical_frame'
+
+
+def euler_from_quaternion(q):
+    angles = Vector3()
+    
+    sinr_cosp = 2 * (q.w * q.x + q.y * q.z)
+    cosr_cosp = 1 - 2 * (q.x * q.x + q.y * q.y)
+    angles.x = np.arctan2(sinr_cosp, cosr_cosp)
+
+    sinp = 2 * (q.w * q.y - q.z * q.x)
+    angles.y = np.arcsin(sinp)
+
+    siny_cosp = 2 * (q.w * q.z + q.x * q.y)
+    cosy_cosp = 1 - 2 * (q.y * q.y + q.z * q.z)
+    angles.z = np.arctan2(siny_cosp, cosy_cosp)
+
+    return angles
 
 
 class GetPcdNode(Node):
@@ -26,7 +43,7 @@ class GetPcdNode(Node):
         self.points = set()
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self) # necessary
-        self.camera_sensor_trans = TransformStamped()
+        self.camera_sensor_trans = None
         self.create_subscription(
             PointCloud2,
             '/depth/color/points',
@@ -45,26 +62,28 @@ class GetPcdNode(Node):
         time.sleep(1)
         self.flag = True
         
-    def get_transform(self, source_frame, target_frame, default_value=None):
+    def get_transform(self, source_frame, target_frame, time):
         try:
-            now = rclpy.time.Time()
-            self.tf_buffer.can_transform(target_frame, source_frame, now, Duration(seconds=2))
-            trans = self.tf_buffer.lookup_transform(target_frame, source_frame, now)
+            self.tf_buffer.can_transform(target_frame, source_frame, time, Duration(seconds=2))
+            trans = self.tf_buffer.lookup_transform(target_frame, source_frame, time)
             self.get_logger().info(f'Successfully transformed {source_frame} to {target_frame}')
             return trans
         except TransformException as ex:
-            self.get_logger().info(f'Could not transform {source_frame} to {target_frame}: {ex}')
-            return default_value
+            self.get_logger().warning(f'Could not transform {source_frame} to {target_frame}: {ex}')
+            return None
             
     def get_transform_matrices(self):
         Vq = self.camera_sensor_trans.transform.rotation
-        Vt = self.camera_sensor_trans.transform.translation
+        angles = euler_from_quaternion(Vq)
         Vq = [Vq.w, Vq.x, Vq.y, Vq.z]
-        Vt = [-Vt.x, -Vt.y, -Vt.z]
-        angles = tfs.euler_from_quaternion(Vq)
-        Rx = tfs.rotation_matrix(3.14159265, [1,0,0])
-        Ry = tfs.rotation_matrix(angles[2], [0,1,0])
-        Rz = tfs.rotation_matrix(0, [0,0,1])
+        angles.x = 0.0
+        angles.y = 0.0
+        Rx = tfs.rotation_matrix(angles.x, [1,0,0])
+        Ry = tfs.rotation_matrix(angles.y, [0,1,0])
+        Rz = tfs.rotation_matrix(angles.z, [0,0,1])
+        
+        Vt = self.camera_sensor_trans.transform.translation
+        Vt = [Vt.x, Vt.y, Vt.z]
         return np.around(tfs.concatenate_matrices(Rx, Ry, Rz), 5), np.around(tfs.translation_matrix(Vt), 5)
         # return tfs.quaternion_matrix(Vq), tfs.translation_matrix(Vt)
 
@@ -74,10 +93,13 @@ class GetPcdNode(Node):
         self.flag = False
         self.get_logger().info(f"Processing frame...")
         
-        self.camera_sensor_trans = self.get_transform(SOURCE_FRAME_ID, TARGET_FRAME_ID, self.camera_sensor_trans)
+        self.camera_sensor_trans = self.get_transform(SOURCE_FRAME_ID, TARGET_FRAME_ID, data.header.stamp)
+        if not self.camera_sensor_trans:
+            self.flag = True
+            return
         Mr, Mt = self.get_transform_matrices()
         
-        pcd_data = np.array(list(pc2.read_points(data, field_names=['x','y','z'], skip_nans=True)))
+        pcd_data = np.array(list(read_points(data, field_names=['x','y','z'], skip_nans=True)))
         P = np.ones((pcd_data.shape[0], 4)) # add the fourth column
         P[:,:-1] = pcd_data
         P = np.around(tfs.concatenate_matrices(Mr, Mt, P.T), 3).T
