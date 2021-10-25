@@ -76,4 +76,3 @@ ros2 launch simulate_realsense_d435i simulate_realsense_d435i.launch.py
 ros2 run simulate_realsense_d435i get_pcd
 ros2 run simulate_realsense_d435i teleop_keyboard
 ```
-

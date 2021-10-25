@@ -85,12 +85,7 @@ class TestingNode(Node):
 def main(args=None):
     rclpy.init(args=args)
     get_pcd_node = TestingNode()
-
-    try:
-        rclpy.spin(get_pcd_node)
-    except KeyboardInterrupt:
-        get_pcd_node.save_pcd()
-
+    get_pcd_node.save_pcd()
     rclpy.shutdown()
 
 
