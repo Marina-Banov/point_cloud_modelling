@@ -61,7 +61,7 @@ class GetPcdNode(Node):
 
     def get_transform(self, source_frame, target_frame, timestamp):
         try:
-            self.tf_buffer.can_transform(target_frame, source_frame, timestamp, Duration(seconds=2))
+            self.tf_buffer.can_transform(target_frame, source_frame, timestamp, Duration(seconds=0))
             trans = self.tf_buffer.lookup_transform(target_frame, source_frame, timestamp)
             self.get_logger().info(f'Successfully transformed {source_frame} to {target_frame}')
             return trans
@@ -80,7 +80,7 @@ class GetPcdNode(Node):
         Rz = tfs.rotation_matrix(angles.z, [0, 0, 1])
 
         Vt = self.camera_sensor_trans.transform.translation
-        Vt = [Vt.x, Vt.y, Vt.z]
+        Vt = [-Vt.x, -Vt.y, -Vt.z]  # MINUSI!!!
         return np.around(tfs.concatenate_matrices(Rx, Ry, Rz), 5), np.around(tfs.translation_matrix(Vt), 5)
         # return tfs.quaternion_matrix(Vq), tfs.translation_matrix(Vt)
 
