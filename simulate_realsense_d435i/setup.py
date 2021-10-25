@@ -4,6 +4,7 @@ from glob import glob
 
 package_name = 'simulate_realsense_d435i'
 
+
 def package_files(directory):
     result = []
     for (path, directories, filenames) in os.walk(directory):
@@ -13,13 +14,14 @@ def package_files(directory):
         result.append((os.path.join('share', package_name, path), paths))
     return result
 
+
 setup(
     name=package_name,
     version='1.0.0',
     packages=[package_name],
     data_files=[
         ('share/ament_index/resource_index/packages',
-            ['resource/' + package_name]),
+         ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         ('share/' + package_name, glob('launch/*.launch.py')),
         ('share/' + package_name + '/worlds', glob('worlds/*')),
@@ -30,13 +32,15 @@ setup(
     zip_safe=True,
     maintainer='Marina Banov',
     maintainer_email='m.banov7@gmail.com',
-    description='This package uses a Turtlebot3 robot with an Intel Realsense D435i depth camera and tries to create pointclouds of Gazebo environments.',
+    description='This package uses a Turtlebot3 robot with an Intel Realsense D435i depth camera and tries to create '
+                'pointclouds of Gazebo environments.',
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
             'get_pcd = simulate_realsense_d435i.get_pcd:main',
             'teleop_keyboard = simulate_realsense_d435i.teleop_keyboard:main',
+            'testing = simulate_realsense_d435i.testing:main',
         ],
     },
 )
