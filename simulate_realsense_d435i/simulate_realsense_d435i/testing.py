@@ -44,7 +44,7 @@ class TestingNode(Node):
         self.camera_sensor_trans = None
         self.process_frame(0)
         self.process_frame(1)
-        self.save_pcd('translate')s
+        self.save_pcd('translate')
         self.points = set()
         self.camera_sensor_trans = None
         self.process_frame(0)
@@ -65,7 +65,7 @@ class TestingNode(Node):
         Rz = tfs.rotation_matrix(angles.z, [0, 0, 1])
 
         Vt = self.camera_sensor_trans.translation
-        Vt = [-Vt.x, -Vt.y, -Vt.z]
+        Vt = [Vt.x, Vt.y, Vt.z]
         # return np.around(tfs.concatenate_matrices(Rx, Ry, Rz), 5), np.around(tfs.translation_matrix(Vt), 5)
         return tfs.quaternion_matrix(Vq), tfs.translation_matrix(Vt)
 
@@ -76,8 +76,8 @@ class TestingNode(Node):
 
         pcd_data = np.array(POINTS[iteration])
         P = np.ones((pcd_data.shape[0], 4))  # add the fourth column
-        P[:, :-1] = pcd_data
-        P = np.dot(Mt, np.dot(Mr, P.T)).T
+        P[:, :-1] = pcd_data*-1
+        P = np.around(np.dot(Mt, np.dot(Mr, P.T)), 3).T
 
         # tuples are hashable objects and will cause collisions when added to a set
         new_points = list(map(lambda t: (t[0], t[1], t[2]), P))

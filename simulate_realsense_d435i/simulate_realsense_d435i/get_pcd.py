@@ -75,12 +75,13 @@ class GetPcdNode(Node):
         Vq = [Vq.w, Vq.x, Vq.y, Vq.z]
         angles.x = 0.0
         angles.y = 0.0
+        angles.z = 0.0
         Rx = tfs.rotation_matrix(angles.x, [1, 0, 0])
         Ry = tfs.rotation_matrix(angles.y, [0, 1, 0])
         Rz = tfs.rotation_matrix(angles.z, [0, 0, 1])
 
         Vt = self.camera_sensor_trans.transform.translation
-        Vt = [-Vt.x, -Vt.y, -Vt.z]  # MINUSI!!!
+        Vt = [Vt.x, Vt.y, Vt.z]
         return np.around(tfs.concatenate_matrices(Rx, Ry, Rz), 5), np.around(tfs.translation_matrix(Vt), 5)
         # return tfs.quaternion_matrix(Vq), tfs.translation_matrix(Vt)
 
@@ -98,8 +99,8 @@ class GetPcdNode(Node):
 
         pcd_data = np.array(list(read_points(data, field_names=['x', 'y', 'z'], skip_nans=True)))
         P = np.ones((pcd_data.shape[0], 4))  # add the fourth column
-        P[:, :-1] = pcd_data
-        P = np.dot(Mt, np.dot(Mr, P.T)).T
+        P[:, :-1] = pcd_data*-1
+        P = np.around(np.dot(Mt, np.dot(Mr, P.T)), 3).T
 
         # tuples are hashable objects and will cause collisions when added to a set
         new_points = list(map(lambda t: (t[0], t[1], t[2]), P))
