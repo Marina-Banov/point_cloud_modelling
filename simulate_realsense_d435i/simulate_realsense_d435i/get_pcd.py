@@ -12,26 +12,10 @@ from geometry_msgs.msg import Vector3
 from tf2_ros import TransformException
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
+from . import utils
 
 SOURCE_FRAME_ID = 'odom'
 TARGET_FRAME_ID = 'camera_depth_optical_frame'
-
-
-def euler_from_quaternion(q):
-    angles = Vector3()
-
-    sinr_cosp = 2 * (q.w * q.x + q.y * q.z)
-    cosr_cosp = 1 - 2 * (q.x * q.x + q.y * q.y)
-    angles.x = np.arctan2(sinr_cosp, cosr_cosp)
-
-    sinp = 2 * (q.w * q.y - q.z * q.x)
-    angles.y = np.arcsin(sinp)
-
-    siny_cosp = 2 * (q.w * q.z + q.x * q.y)
-    cosy_cosp = 1 - 2 * (q.y * q.y + q.z * q.z)
-    angles.z = np.arctan2(siny_cosp, cosy_cosp)
-
-    return angles
 
 
 class GetPcdNode(Node):
@@ -71,14 +55,11 @@ class GetPcdNode(Node):
 
     def get_transform_matrices(self):
         Vq = self.camera_sensor_trans.transform.rotation
-        angles = euler_from_quaternion(Vq)
+        angles = utils.euler_from_quaternion(Vq)
         Vq = [Vq.w, Vq.x, Vq.y, Vq.z]
-        angles.x = 0.0
-        angles.y = 0.0
-        angles.z = 0.0
-        Rx = tfs.rotation_matrix(angles.x, [1, 0, 0])
-        Ry = tfs.rotation_matrix(angles.y, [0, 1, 0])
-        Rz = tfs.rotation_matrix(angles.z, [0, 0, 1])
+        Rx = tfs.rotation_matrix(np.copysign(np.pi/2, angles.x), [1, 0, 0])
+        Ry = tfs.rotation_matrix(-angles.y, [0, 1, 0])
+        Rz = tfs.rotation_matrix(0 if angles.x > 0 else np.pi, [0, 0, 1])
 
         Vt = self.camera_sensor_trans.transform.translation
         Vt = [Vt.x, Vt.y, Vt.z]
@@ -99,8 +80,8 @@ class GetPcdNode(Node):
 
         pcd_data = np.array(list(read_points(data, field_names=['x', 'y', 'z'], skip_nans=True)))
         P = np.ones((pcd_data.shape[0], 4))  # add the fourth column
-        P[:, :-1] = pcd_data*-1
-        P = np.around(np.dot(Mt, np.dot(Mr, P.T)), 3).T
+        P[:, :-1] = pcd_data
+        P = np.around(np.dot(Mt, np.dot(Mr, P.T))*-1, 3).T
 
         # tuples are hashable objects and will cause collisions when added to a set
         new_points = list(map(lambda t: (t[0], t[1], t[2]), P))

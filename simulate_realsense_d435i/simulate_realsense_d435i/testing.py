@@ -5,6 +5,7 @@ import transformations as tfs
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Quaternion, Transform, Vector3
+from . import utils
 
 CONTROL_POINTS = [(-1, 7, 0), (-1, 5, 0), (1, 5, 0), (1, 7, 0), (-0.5, 6.5, 2), (0, 5.5, 2), (0.5, 6.5, 2)]
 TRANSLATE_POINTS = [(-1, 4, 0), (-1, 2, 0), (1, 2, 0), (1, 4, 0), (-0.5, 3.5, 2), (0, 2.5, 2), (0.5, 3.5, 2)]
@@ -18,23 +19,6 @@ POSITION = [
     Transform(rotation=Quaternion(z=0.707, w=0.707)),
     Transform(translation=Vector3(x=1.0, y=-2.0), rotation=Quaternion(z=0.707, w=0.707))
 ]
-
-
-def euler_from_quaternion(q):
-    angles = Vector3()
-
-    sinr_cosp = 2 * (q.w * q.x + q.y * q.z)
-    cosr_cosp = 1 - 2 * (q.x * q.x + q.y * q.y)
-    angles.x = np.arctan2(sinr_cosp, cosr_cosp)
-
-    sinp = 2 * (q.w * q.y - q.z * q.x)
-    angles.y = np.arcsin(sinp)
-
-    siny_cosp = 2 * (q.w * q.z + q.x * q.y)
-    cosy_cosp = 1 - 2 * (q.y * q.y + q.z * q.z)
-    angles.z = np.arctan2(siny_cosp, cosy_cosp)
-
-    return angles
 
 
 class TestingNode(Node):
@@ -58,11 +42,11 @@ class TestingNode(Node):
 
     def get_transform_matrices(self):
         Vq = self.camera_sensor_trans.rotation
-        angles = euler_from_quaternion(Vq)
+        angles = utils.euler_from_quaternion(Vq)
         Vq = [Vq.w, Vq.x, Vq.y, Vq.z]
-        Rx = tfs.rotation_matrix(angles.x, [1, 0, 0])
-        Ry = tfs.rotation_matrix(angles.y, [0, 1, 0])
-        Rz = tfs.rotation_matrix(angles.z, [0, 0, 1])
+        Rx = tfs.rotation_matrix(np.copysign(np.pi/2, angles.x), [1, 0, 0])
+        Ry = tfs.rotation_matrix(-angles.y, [0, 1, 0])
+        Rz = tfs.rotation_matrix(0 if angles.x > 0 else np.pi, [0, 0, 1])
 
         Vt = self.camera_sensor_trans.translation
         Vt = [Vt.x, Vt.y, Vt.z]
