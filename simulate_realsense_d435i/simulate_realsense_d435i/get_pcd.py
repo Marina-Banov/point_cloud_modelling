@@ -12,7 +12,6 @@ from geometry_msgs.msg import Vector3
 from tf2_ros import TransformException
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
-from . import utils
 
 SOURCE_FRAME_ID = 'odom'
 TARGET_FRAME_ID = 'camera_depth_optical_frame'
@@ -55,16 +54,10 @@ class GetPcdNode(Node):
 
     def get_transform_matrices(self):
         Vq = self.camera_sensor_trans.transform.rotation
-        angles = utils.euler_from_quaternion(Vq)
-        Vq = [Vq.w, Vq.x, Vq.y, Vq.z]
-        Rx = tfs.rotation_matrix(np.copysign(np.pi/2, angles.x), [1, 0, 0])
-        Ry = tfs.rotation_matrix(-angles.y, [0, 1, 0])
-        Rz = tfs.rotation_matrix(0 if angles.x > 0 else np.pi, [0, 0, 1])
-
+        Vq = [Vq.w, -Vq.x, -Vq.y, -Vq.z]
         Vt = self.camera_sensor_trans.transform.translation
         Vt = [Vt.x, Vt.y, Vt.z]
-        return np.around(tfs.concatenate_matrices(Rx, Ry, Rz), 5), np.around(tfs.translation_matrix(Vt), 5)
-        # return tfs.quaternion_matrix(Vq), tfs.translation_matrix(Vt)
+        return np.around(tfs.quaternion_matrix(Vq), 5), np.around(tfs.translation_matrix(Vt), 5)
 
     def process_frame(self, data):
         if not self.flag:
@@ -80,8 +73,12 @@ class GetPcdNode(Node):
 
         pcd_data = np.array(list(read_points(data, field_names=['x', 'y', 'z'], skip_nans=True)))
         P = np.ones((pcd_data.shape[0], 4))  # add the fourth column
+        # ROTATION WORKS LIKE THIS:
         P[:, :-1] = pcd_data
-        P = np.around(np.dot(Mt, np.dot(Mr, P.T))*-1, 3).T
+        P = np.around(np.dot(Mr, P.T), 3).T
+        # TRANSLATION WORKS LIKE THIS:
+        # P[:, :-1] = pcd_data * -1
+        # P = np.around(np.dot(Mt, P.T), 3).T
 
         # tuples are hashable objects and will cause collisions when added to a set
         new_points = list(map(lambda t: (t[0], t[1], t[2]), P))
