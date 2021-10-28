@@ -25,43 +25,35 @@ class TestingNode(Node):
     def __init__(self):
         super().__init__('testing')
         self.points = set()
-        self.camera_sensor_trans = None
         self.process_frame(0)
         self.process_frame(1)
         self.save_pcd('translate')
         self.points = set()
-        self.camera_sensor_trans = None
         self.process_frame(0)
         self.process_frame(2)
         self.save_pcd('rotate')
         self.points = set()
-        self.camera_sensor_trans = None
         self.process_frame(0)
         self.process_frame(3)
         self.save_pcd('translate_rotate')
-
-    def get_transform_matrices(self):
-        Vq = self.camera_sensor_trans.rotation
-        angles = utils.euler_from_quaternion(Vq)
+    
+    def get_transform_matrices(self, transform):
+        Vq = transform.rotation
         Vq = [Vq.w, Vq.x, Vq.y, Vq.z]
-        Rx = tfs.rotation_matrix(np.copysign(np.pi/2, angles.x), [1, 0, 0])
-        Ry = tfs.rotation_matrix(-angles.y, [0, 1, 0])
-        Rz = tfs.rotation_matrix(0 if angles.x > 0 else np.pi, [0, 0, 1])
-
-        Vt = self.camera_sensor_trans.translation
+        Vt = transform.translation
         Vt = [Vt.x, Vt.y, Vt.z]
-        # return np.around(tfs.concatenate_matrices(Rx, Ry, Rz), 5), np.around(tfs.translation_matrix(Vt), 5)
-        return tfs.quaternion_matrix(Vq), tfs.translation_matrix(Vt)
+        return np.around(tfs.quaternion_matrix(Vq), 5), np.around(tfs.translation_matrix(Vt), 5)
 
     def process_frame(self, iteration):
         self.get_logger().info(f"Processing frame...")
-        self.camera_sensor_trans = POSITION[iteration]
-        Mr, Mt = self.get_transform_matrices()
+        Mr, Mt = self.get_transform_matrices(POSITION[iteration])
+        Ms = tfs.scale_matrix(-1)
 
         pcd_data = np.array(POINTS[iteration])
         P = np.ones((pcd_data.shape[0], 4))  # add the fourth column
-        P[:, :-1] = pcd_data*-1
-        P = np.around(np.dot(Mt, np.dot(Mr, P.T)), 3).T
+        P[:, :-1] = pcd_data
+        
+        P = np.around(tfs.concatenate_matrices(Mt, Ms, np.dot(Mr, P.T)), 3).T
 
         # tuples are hashable objects and will cause collisions when added to a set
         new_points = list(map(lambda t: (t[0], t[1], t[2]), P))
