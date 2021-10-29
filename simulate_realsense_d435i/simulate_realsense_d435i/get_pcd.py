@@ -23,7 +23,6 @@ class GetPcdNode(Node):
         self.points = set()
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)  # necessary
-        self.camera_sensor_trans = None
         self.create_subscription(
             PointCloud2,
             '/depth/color/points',
@@ -47,15 +46,15 @@ class GetPcdNode(Node):
             self.tf_buffer.can_transform(target_frame, source_frame, timestamp, Duration(seconds=0))
             trans = self.tf_buffer.lookup_transform(target_frame, source_frame, timestamp)
             self.get_logger().info(f'Successfully transformed {source_frame} to {target_frame}')
-            return trans
+            return trans.transform
         except TransformException as ex:
             self.get_logger().warning(f'Could not transform {source_frame} to {target_frame}: {ex}')
             return None
 
-    def get_transform_matrices(self):
-        Vq = self.camera_sensor_trans.transform.rotation
+    def get_transform_matrices(self, transform):
+        Vq = transform.rotation
         Vq = [Vq.w, -Vq.x, -Vq.y, -Vq.z]
-        Vt = self.camera_sensor_trans.transform.translation
+        Vt = transform.translation
         Vt = [Vt.x, Vt.y, Vt.z]
         return np.around(tfs.quaternion_matrix(Vq), 5), np.around(tfs.translation_matrix(Vt), 5)
 
@@ -65,20 +64,22 @@ class GetPcdNode(Node):
         self.flag = False
         self.get_logger().info(f"Processing frame...")
 
-        self.camera_sensor_trans = self.get_transform(SOURCE_FRAME_ID, TARGET_FRAME_ID, data.header.stamp)
-        if not self.camera_sensor_trans:
+        trans = self.get_transform(SOURCE_FRAME_ID, TARGET_FRAME_ID, data.header.stamp)
+        if not trans:
             self.flag = True
             return
-        Mr, Mt = self.get_transform_matrices()
+        Mr, Mt = self.get_transform_matrices(trans)
+        Ms = tfs.scale_matrix(-1)
+        Mr_ = np.around(tfs.quaternion_matrix([0.5, -0.5, 0.5, 0.5]), 5)
 
         pcd_data = np.array(list(read_points(data, field_names=['x', 'y', 'z'], skip_nans=True)))
         P = np.ones((pcd_data.shape[0], 4))  # add the fourth column
-        # ROTATION WORKS LIKE THIS:
         P[:, :-1] = pcd_data
-        P = np.around(np.dot(Mr, P.T), 3).T
-        # TRANSLATION WORKS LIKE THIS:
-        # P[:, :-1] = pcd_data * -1
-        # P = np.around(np.dot(Mt, P.T), 3).T
+        
+        # P = np.around(np.dot(Mr, P.T), 3).T  # ROTATION WORKS
+        # P = np.around(tfs.concatenate_matrices(Mr, Mr_, P.T), 3).T
+        # P = np.around(tfs.concatenate_matrices(Mt, Ms, P.T), 3).T  # TRANSLATION WORKS
+        P = np.around(tfs.concatenate_matrices(Ms, Mt, Mr, Mr_, P.T), 3).T
 
         # tuples are hashable objects and will cause collisions when added to a set
         new_points = list(map(lambda t: (t[0], t[1], t[2]), P))
