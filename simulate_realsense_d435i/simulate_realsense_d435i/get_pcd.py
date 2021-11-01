@@ -16,6 +16,9 @@ from tf2_ros.transform_listener import TransformListener
 SOURCE_FRAME_ID = 'odom'
 TARGET_FRAME_ID = 'camera_depth_optical_frame'
 
+Ms = tfs.scale_matrix(-1)
+Mr_ = np.around(tfs.quaternion_matrix([0.5, 0.5, -0.5, 0.5]), 5)
+
 
 class GetPcdNode(Node):
     def __init__(self):
@@ -69,8 +72,6 @@ class GetPcdNode(Node):
             self.flag = True
             return
         Mr, Mt = self.get_transform_matrices(trans)
-        Ms = tfs.scale_matrix(-1)
-        Mr_ = np.around(tfs.quaternion_matrix([0.5, -0.5, 0.5, 0.5]), 5)
 
         pcd_data = np.array(list(read_points(data, field_names=['x', 'y', 'z'], skip_nans=True)))
         P = np.ones((pcd_data.shape[0], 4))  # add the fourth column
@@ -79,7 +80,8 @@ class GetPcdNode(Node):
         # P = np.around(np.dot(Mr, P.T), 3).T  # ROTATION WORKS
         # P = np.around(tfs.concatenate_matrices(Mr, Mr_, P.T), 3).T
         # P = np.around(tfs.concatenate_matrices(Mt, Ms, P.T), 3).T  # TRANSLATION WORKS
-        P = np.around(tfs.concatenate_matrices(Ms, Mt, Mr, Mr_, P.T), 3).T
+        # P = np.around(tfs.concatenate_matrices(Mt, Ms, Mr, Mr_, P.T), 3).T
+        P = np.around(tfs.concatenate_matrices(Mt, Ms, Mr, Mr.T, P.T), 3).T
 
         # tuples are hashable objects and will cause collisions when added to a set
         new_points = list(map(lambda t: (t[0], t[1], t[2]), P))
@@ -108,7 +110,8 @@ def main(args=None):
     try:
         rclpy.spin(get_pcd_node)
     except KeyboardInterrupt:
-        get_pcd_node.save_pcd()
+        if get_pcd_node.points:
+            get_pcd_node.save_pcd()
 
     rclpy.shutdown()
 
