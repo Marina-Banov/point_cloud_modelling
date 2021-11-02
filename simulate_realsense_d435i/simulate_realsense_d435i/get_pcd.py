@@ -3,6 +3,7 @@ import numpy as np
 import open3d as o3d
 import transformations as tfs
 import rclpy
+from . import utils
 from rclpy.node import Node
 from rclpy.duration import Duration
 from std_msgs.msg import Bool
@@ -17,7 +18,6 @@ SOURCE_FRAME_ID = 'odom'
 TARGET_FRAME_ID = 'camera_depth_optical_frame'
 
 Ms = tfs.scale_matrix(-1)
-Mr_ = np.around(tfs.quaternion_matrix([0.5, 0.5, -0.5, 0.5]), 5)
 
 
 class GetPcdNode(Node):
@@ -56,10 +56,14 @@ class GetPcdNode(Node):
 
     def get_transform_matrices(self, transform):
         Vq = transform.rotation
+        angles = utils.euler_from_quaternion(Vq)
         Vq = [Vq.w, -Vq.x, -Vq.y, -Vq.z]
+        Rx = tfs.rotation_matrix(np.copysign(np.pi/2, angles.x), [1, 0, 0])
+        Ry = tfs.rotation_matrix(-angles.y, [0, 1, 0])
+        Rz = tfs.rotation_matrix(0 if angles.x > 0 else np.pi, [0, 0, 1])
         Vt = transform.translation
         Vt = [Vt.x, Vt.y, Vt.z]
-        return np.around(tfs.quaternion_matrix(Vq), 5), np.around(tfs.translation_matrix(Vt), 5)
+        return np.around(tfs.concatenate_matrices(Rx, Ry, Rz), 5), np.around(tfs.translation_matrix(Vt), 5)
 
     def process_frame(self, data):
         if not self.flag:
@@ -77,11 +81,8 @@ class GetPcdNode(Node):
         P = np.ones((pcd_data.shape[0], 4))  # add the fourth column
         P[:, :-1] = pcd_data
         
-        # P = np.around(np.dot(Mr, P.T), 3).T  # ROTATION WORKS
-        # P = np.around(tfs.concatenate_matrices(Mr, Mr_, P.T), 3).T
-        # P = np.around(tfs.concatenate_matrices(Mt, Ms, P.T), 3).T  # TRANSLATION WORKS
-        # P = np.around(tfs.concatenate_matrices(Mt, Ms, Mr, Mr_, P.T), 3).T
-        P = np.around(tfs.concatenate_matrices(Mt, Ms, Mr, Mr.T, P.T), 3).T
+        P = np.around(tfs.concatenate_matrices(Mt, Ms, P.T), 3).T
+        P = np.around(np.dot(Mr, P.T), 3).T
 
         # tuples are hashable objects and will cause collisions when added to a set
         new_points = list(map(lambda t: (t[0], t[1], t[2]), P))
