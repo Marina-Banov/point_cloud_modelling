@@ -9,7 +9,6 @@ from rclpy.duration import Duration
 from std_msgs.msg import Bool
 from sensor_msgs.msg import PointCloud2
 from sensor_msgs_py.point_cloud2 import read_points
-from geometry_msgs.msg import Vector3
 from tf2_ros import TransformException
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
@@ -18,6 +17,17 @@ SOURCE_FRAME_ID = 'odom'
 TARGET_FRAME_ID = 'camera_depth_optical_frame'
 
 Ms = tfs.scale_matrix(-1)
+
+
+def get_transform_matrices(transform):
+    Vq = transform.rotation
+    angles = utils.euler_from_quaternion(Vq)
+    Rx = tfs.rotation_matrix(np.copysign(np.pi/2, angles.x), [1, 0, 0])
+    Ry = tfs.rotation_matrix(-angles.y, [0, 1, 0])
+    Rz = tfs.rotation_matrix(0 if angles.x > 0 else np.pi, [0, 0, 1])
+    Vt = transform.translation
+    Vt = [Vt.x, Vt.y, Vt.z]
+    return np.around(tfs.concatenate_matrices(Rx, Ry, Rz), 5), np.around(tfs.translation_matrix(Vt), 5)
 
 
 class GetPcdNode(Node):
@@ -54,17 +64,6 @@ class GetPcdNode(Node):
             self.get_logger().warning(f'Could not transform {source_frame} to {target_frame}: {ex}')
             return None
 
-    def get_transform_matrices(self, transform):
-        Vq = transform.rotation
-        angles = utils.euler_from_quaternion(Vq)
-        Vq = [Vq.w, -Vq.x, -Vq.y, -Vq.z]
-        Rx = tfs.rotation_matrix(np.copysign(np.pi/2, angles.x), [1, 0, 0])
-        Ry = tfs.rotation_matrix(-angles.y, [0, 1, 0])
-        Rz = tfs.rotation_matrix(0 if angles.x > 0 else np.pi, [0, 0, 1])
-        Vt = transform.translation
-        Vt = [Vt.x, Vt.y, Vt.z]
-        return np.around(tfs.concatenate_matrices(Rx, Ry, Rz), 5), np.around(tfs.translation_matrix(Vt), 5)
-
     def process_frame(self, data):
         if not self.flag:
             return
@@ -75,7 +74,7 @@ class GetPcdNode(Node):
         if not trans:
             self.flag = True
             return
-        Mr, Mt = self.get_transform_matrices(trans)
+        Mr, Mt = get_transform_matrices(trans)
 
         pcd_data = np.array(list(read_points(data, field_names=['x', 'y', 'z'], skip_nans=True)))
         P = np.ones((pcd_data.shape[0], 4))  # add the fourth column
@@ -119,3 +118,4 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
+

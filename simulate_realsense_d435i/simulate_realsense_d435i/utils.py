@@ -5,7 +5,7 @@ from geometry_msgs.msg import Vector3
 def euler_from_quaternion(q):
     angles = Vector3()
 
-    sinr_cosp = 2 * (q.w * q.x + q.y * q.z)a
+    sinr_cosp = 2 * (q.w * q.x + q.y * q.z)
     cosr_cosp = 1 - 2 * (q.x * q.x + q.y * q.y)
     angles.x = np.arctan2(sinr_cosp, cosr_cosp)
 
