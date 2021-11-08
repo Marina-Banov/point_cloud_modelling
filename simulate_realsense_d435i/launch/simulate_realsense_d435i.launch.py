@@ -31,7 +31,7 @@ def to_urdf(xacro_path, parameters=None):
 
 
 def generate_launch_description():
-    world_launch_arg = DeclareLaunchArgument("world", default_value='empty_world')
+    world_launch_arg = DeclareLaunchArgument("world", default_value='env3')
     
     rviz_config_dir = os.path.join(PKG_THIS, 'rviz', 'urdf.rviz')
     rviz_node = Node(
@@ -57,7 +57,7 @@ def generate_launch_description():
     
     gazebo_server = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(PKG_GAZEBO_ROS, 'launch', 'gzserver.launch.py')),
-        launch_arguments={'world': [PKG_THIS, '/worlds/', LaunchConfiguration('world'), '.model']}.items(),
+        launch_arguments={'world': [PKG_THIS, '/worlds/', LaunchConfiguration('world'), '.world']}.items(),
     )
     
     gazebo_client = IncludeLaunchDescription(
@@ -71,9 +71,9 @@ def generate_launch_description():
     
     return launch.LaunchDescription([
         world_launch_arg,
-        # rviz_node,
+        rviz_node,
         model_node,
         gazebo_server,
-        gazebo_client,
+        # gazebo_client,
         gazebo_sim,
     ])
