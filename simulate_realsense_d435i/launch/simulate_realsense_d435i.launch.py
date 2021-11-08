@@ -29,11 +29,41 @@ def to_urdf(xacro_path, parameters=None):
     out.write(doc.toprettyxml(indent='  '))
     return urdf_path
 
+octomap_params = {
+    'resolution': 0.15,
+    'frame_id': 'odom',
+    'base_frame_id': 'camera_depth_optical_frame',
+    'height_map': True,
+    'colored_map': True,
+    'color_factor': 0.8,
+    'filter_ground': False,
+    'filter_speckles': False,
+    'ground_filter/distance': 0.04,
+    'ground_filter/angle': 0.15,
+    'ground_filter/plane_distance': 0.07,
+    'compress_map': True,
+    'incremental_2D_projection': False,
+    'sensor_model/max_range': -1.0,
+    'sensor_model/hit': 0.7,
+    'sensor_model/miss': 0.4,
+    'sensor_model/min': 0.12,
+    'sensor_model/max': 0.97,
+    'color/r': 0.0,
+    'color/g': 0.0,
+    'color/b': 1.0,
+    'color/a': 1.0,
+    'color_free/r': 0.0,
+    'color_free/g': 0.0,
+    'color_free/b': 1.0,
+    'color_free/a': 1.0,
+    'publish_free_space': False,
+}
+    
 
 def generate_launch_description():
     world_launch_arg = DeclareLaunchArgument("world", default_value='env3')
     
-    rviz_config_dir = os.path.join(PKG_THIS, 'rviz', 'urdf.rviz')
+    rviz_config_dir = os.path.join(PKG_THIS, 'rviz', 'rviz.rviz')
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
@@ -69,6 +99,14 @@ def generate_launch_description():
         output='screen'
     )
     
+    octomap_server_node = Node(
+        package='octomap_server2',
+        executable='octomap_server',
+        output='screen',
+        remappings=[('cloud_in', '/depth/color/points')],
+        parameters=[octomap_params]
+    )
+    
     return launch.LaunchDescription([
         world_launch_arg,
         rviz_node,
@@ -76,4 +114,5 @@ def generate_launch_description():
         gazebo_server,
         # gazebo_client,
         gazebo_sim,
+        octomap_server_node,
     ])

@@ -43,8 +43,7 @@ sudo apt-get install python3-rosdep -y
 sudo rosdep init
 rosdep update
 rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y
-colcon build
-. install/setup.bash
+colcon build && . install/setup.bash
 ```
 
 Check if everything is working
@@ -57,11 +56,20 @@ Install Realsense Gazebo plugin
 cd colcon_ws/src/
 git clone -b foxy-devel https://github.com/pal-robotics/realsense_gazebo_plugin
 cd ~/colcon_ws/
-colcon build
-. install/setup.bash
+colcon build && . install/setup.bash
 ```
 
-Start working with this repo
+Install Octomap server
+```
+sudo apt install ros-foxy-octomap ros-foxy-octomap-msgs
+source ~/.bashrc
+cd ~/ros2_ws/src/
+git clone https://github.com/iKrishneel/octomap_server2.git
+cd ~/ros2_ws/
+colcon build && . install/setup.bash
+```
+
+## Working with this repo
 ```
 cd ~/colcon_ws/src/
 git clone https://github.com/Marina-Banov/pcl-get-mesh.git
@@ -70,40 +78,10 @@ source ~/.bashrc
 cd ~/colcon_ws/
 sudo apt install ros-foxy-sensor-msgs-py pcl-tools
 pip install open3d transformations
-colcon build
-. install/setup.bash
+colcon build && . install/setup.bash
+```
+```
 ros2 launch simulate_realsense_d435i simulate_realsense_d435i.launch.py
 ros2 run simulate_realsense_d435i get_pcd
 ros2 run simulate_realsense_d435i teleop_keyboard
 ```
-
-## Working with Octomap server
-### Step 1: Install
-```
-sudo apt install ros-foxy-octomap ros-foxy-octomap-msgs
-source ~/.bashrc
-cd ~/ros2_ws/src/
-git clone https://github.com/iKrishneel/octomap_server2.git
-cd ~/ros2_ws/
-colcon build
-. install/setup.bash
-```
-
-### Step 2: Modify launch params
-Open `~/ros2_ws/src/octomap_server2/launch/octomap_server_launch.py` file and modify the following lines:
-```
-17:    'frame_id': 'odom',
-18:    'base_frame_id': 'camera_depth_optical_frame',
-45:    remap = [('cloud_in', '/depth/color/points')]
-```
-
-### Step 3: Run
-Terminal 1:
-```
-ros2 launch octomap_server2 octomap_server_launch.py
-```
-Terminal 2:
-```
-rviz2
-```
-
