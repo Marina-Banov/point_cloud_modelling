@@ -52,7 +52,7 @@ public:
     if (full)
       servname = "octomap_full";
     // auto nsrv = n->get_node_services_interface();
-    RCLCPP_INFO(n->get_logger(), "Requesting the map from %s...", servname);
+    RCLCPP_INFO(n->get_logger(), "Requesting the map from %s...", servname.c_str());
     
     auto client = n->create_client<OctomapSrv>(servname);
     while (!client->wait_for_service(std::chrono::seconds(1))) {
@@ -64,7 +64,7 @@ public:
     while(rclcpp::ok() && rclcpp::spin_until_future_complete(n, result_future) !=
       rclcpp::executor::FutureReturnCode::SUCCESS)
     {
-      RCLCPP_WARN(n->get_logger(), "Request to %s failed; trying again...", servname);
+      RCLCPP_WARN(n->get_logger(), "Request to %s failed; trying again...", servname.c_str());
       usleep(1000000);
     }
 
