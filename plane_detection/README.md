@@ -1,5 +1,16 @@
-# step_two
-## Installation
+# plane_detection
+## PCL Installation
+### Ubuntu 20.04
+```
+pip install cython numpy
+```
+
+```
+sudo apt-get update
+sudo apt-get install libpcl-dev
+sudo apt-get install python3-pcl pcl-tools
+```
+
 ### Windows 10
 - download and install [python 3.6.0](https://www.python.org/downloads/release/python-360/) (Windows x86 executable installer)
 - download and install [pcl 1.8.1](https://github.com/PointCloudLibrary/pcl/releases/) (pcl-1.8.1/PCL-1.8.1-AllInOne-msvc2017-win32.exe)

@@ -61,7 +61,7 @@ colcon build && . install/setup.bash
 
 Install Octomap server
 ```
-sudo apt install ros-foxy-octomap ros-foxy-octomap-msgs
+sudo apt install ros-foxy-octomap ros-foxy-octomap-msgs octovis
 source ~/.bashrc
 cd ~/ros2_ws/src/
 git clone https://github.com/iKrishneel/octomap_server2.git
@@ -80,8 +80,27 @@ sudo apt install ros-foxy-sensor-msgs-py pcl-tools
 pip install open3d transformations
 colcon build && . install/setup.bash
 ```
+
+The launch file loads a Gazebo world, positions the Turtlebot inside of it, and opens the Rviz visualization tool.
 ```
 ros2 launch simulate_realsense_d435i simulate_realsense_d435i.launch.py
+```
+The default world is env3. Other available worlds are:
+- empty
+- env8
+- env9
+which you can load like this:
+```
+ros2 launch simulate_realsense_d435i simulate_realsense_d435i.launch.py world:=env8
+```
+
+Open another terminal and run the following line to start the node which will assemble the pointcloud from data received from `/depth/color/points` topic over time.
+```
 ros2 run simulate_realsense_d435i get_pcd
+```
+
+Open another terminal and run the following line to start a node similar to [Turtlebot3 teleop node](https://github.com/ROBOTIS-GIT/turtlebot3/blob/foxy-devel/turtlebot3_teleop/turtlebot3_teleop/script/teleop_keyboard.py) which allows you to control the Turtlebot.
+```
 ros2 run simulate_realsense_d435i teleop_keyboard
 ```
+Note that the `get_pcd` node will only process **one** frame after the `S` or `SPACE` key is pressed. Move the Turtlebot around and watch the octomap of the environment being generated. Press `CTRL+C` inside the `get_pcd` terminal to save the pointcloud.
