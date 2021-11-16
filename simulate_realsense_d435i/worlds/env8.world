@@ -46,59 +46,59 @@
     <include>
       <uri>model://env8</uri>
     </include>
-    
+
     <include>
       <uri>model://turtlebot3_realsense</uri>
     </include>
 
     <state world_name='default'>
       <model name='env8'>
-        <pose>1.48449 -1.43375 0 0 -0 0</pose>
+        <pose>2.02225 -1.46751 0 0 0 -1.57369</pose>
         <scale>1 1 1</scale>
         <link name='Wall_10'>
-          <pose>1.05949 -2.43375 0 0 0 -1.5708</pose>
+          <pose>1.02348 -1.03962 0 0 -0 3.13869</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
         <link name='Wall_11'>
-          <pose>0.05949 -3.85875 0 0 -0 3.14159</pose>
+          <pose>-0.398612 -0.035493 0 0 -0 1.5679</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
         <link name='Wall_12'>
-          <pose>-0.94051 -1.43375 0 0 -0 1.5708</pose>
+          <pose>2.02928 0.957476 0 0 0 -0.002894</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
         <link name='Wall_5'>
-          <pose>1.48449 0.99125 0 0 -0 0</pose>
+          <pose>4.44724 -1.47454 0 0 0 -1.57369</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
         <link name='Wall_6'>
-          <pose>3.90949 -1.43375 0 0 0 -1.5708</pose>
+          <pose>2.01522 -3.8925 0 0 -0 3.13869</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
         <link name='Wall_7'>
-          <pose>2.90949 -3.85875 0 0 -0 3.14159</pose>
+          <pose>-0.406871 -2.88548 0 0 -0 1.5679</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
         <link name='Wall_8'>
-          <pose>1.90949 -2.43375 0 0 -0 1.5708</pose>
+          <pose>1.02102 -1.88962 0 0 0 -0.002894</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
         <link name='Wall_9'>
-          <pose>1.48449 -1.00875 0 0 -0 3.14159</pose>
+          <pose>2.44725 -1.46875 0 0 -0 1.5679</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
