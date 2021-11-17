@@ -1,5 +1,6 @@
 import argparse
 import pcl
+import numpy as np
 from utils import VisualizeType, get, visualize, setup_segmenter
 
 
@@ -15,7 +16,7 @@ def main():
     indices, coefficients = seg.segment()
     print(coefficients)
     result = get(cloud, indices, VisualizeType.CONCAVE_HULL)
-    visualize(result)
+    visualize(np.asarray(result))
 
 
 if __name__ == '__main__':

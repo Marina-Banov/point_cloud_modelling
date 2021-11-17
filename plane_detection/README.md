@@ -28,8 +28,8 @@ sudo apt-get install python3-pcl pcl-tools
   env\Scripts\activate
   ```
 - ```
-  pip install cython numpy
-  pip install --upgrade setuptools
+  pip install cython numpy open3d-python
+  pip install --upgrade setuptools prompt-toolkit==2.0.1
   ```
 - download [python-pcl](https://github.com/strawlab/python-pcl/releases), unzip into `env\Lib\site-packages` and position yourself inside that folder
 - unzip `gtk\bin` into `pkg-config`

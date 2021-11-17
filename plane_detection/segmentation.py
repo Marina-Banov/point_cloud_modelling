@@ -15,11 +15,10 @@ def remove_points(cloud, indices):
 
 
 def transform_inliers(inliers):
-    color = np.array([random.randint(0,255), random.randint(0,255), random.randint(0,255)], dtype=np.int32)
-    rgb = np.array([color[0] << 16 | color[1] << 8 | color[2]], dtype=np.float32)
-    res = np.zeros((inliers.size, 4))
+    color = np.array([random.random(), random.random(), random.random()], dtype=np.float32)
+    res = np.zeros((inliers.size, 6))
     res[:, :3] = inliers
-    res[:, 3] = rgb
+    res[:, 3:] = color
     return res
 
 
@@ -31,14 +30,14 @@ def main():
     print("-------LOADING PCD-------")
     cloud = pcl.load(filename)
 
-    result_points = np.empty((0,3), dtype=np.float32)
+    result_points = np.empty((0,6), dtype=np.float32)
 
     seg = setup_segmenter(cloud, 0, 0, 1)
     indices, coefficients = seg.segment()
     print(coefficients)
     inliers = get(cloud, indices, VisualizeType.ONLY_INLIERS)
     cloud = remove_points(cloud, indices)
-    result_points = np.append(result_points, inliers, axis=0)
+    result_points = np.append(result_points, transform_inliers(inliers), axis=0)
 
     for i in range(2):
         seg = setup_segmenter(cloud, 1, 0, 0)
@@ -48,7 +47,7 @@ def main():
         if len(indices) != 0:
             inliers = get(cloud, indices, VisualizeType.ONLY_INLIERS)
             cloud = remove_points(cloud, indices)
-            result_points = np.append(result_points, inliers, axis=0)
+            result_points = np.append(result_points, transform_inliers(inliers), axis=0)
 
     for i in range(2):
         seg = setup_segmenter(cloud, 0, 1, 0)
@@ -58,12 +57,9 @@ def main():
         if len(indices) != 0:
             inliers = get(cloud, indices, VisualizeType.ONLY_INLIERS)
             cloud = remove_points(cloud, indices)
-            result_points = np.append(result_points, inliers, axis=0)
+            result_points = np.append(result_points, transform_inliers(inliers), axis=0)
 
-    result = pcl.PointCloud()  # TODO XYZRGB
-    result.from_array(result_points.astype(np.float32))
-    visualize(result)
-
+    visualize(result_points)
 
 if __name__ == '__main__':
     main()

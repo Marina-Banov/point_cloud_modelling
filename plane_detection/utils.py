@@ -2,6 +2,7 @@ from enum import Enum
 import numpy as np
 import pcl
 import pcl.pcl_visualization
+import open3d as o3d
 
 
 class VisualizeType(Enum):
@@ -35,14 +36,11 @@ def get(cloud, inliers, v_type):
 
 def visualize(points):
     print("-------VISUALIZING-------")
-    viewer = pcl.pcl_visualization.PCLVisualizering('3D Viewer')
-    viewer.SetBackgroundColor(0, 0, 0)
-    viewer.AddPointCloud(points, b'points')
-    viewer.SetPointCloudRenderingProperties(pcl.pcl_visualization.PCLVISUALIZER_POINT_SIZE, 3, b'points')
-    viewer.InitCameraParameters()
-
-    while not viewer.WasStopped():
-        viewer.SpinOnce(100)
+    vis = o3d.geometry.PointCloud()
+    vis.points = o3d.utility.Vector3dVector(list(points[:, :3]))
+    if points.shape[1] == 6:
+        vis.colors = o3d.utility.Vector3dVector(list(points[:, 3:]))
+    o3d.visualization.draw_geometries([vis])
 
 
 def setup_segmenter(cloud, x, y, z):
