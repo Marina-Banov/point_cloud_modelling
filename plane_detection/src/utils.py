@@ -11,7 +11,10 @@ class VisualizeType(Enum):
     CONCAVE_HULL = 3
 
 
-def get(cloud, inliers, v_type):
+def get(cloud, inliers, v_type, **kwargs):
+    default_kwargs = {'alpha': 0.07}
+    kwargs = {**default_kwargs, **kwargs}
+
     cloud_points = np.full((cloud.size, 3), cloud, dtype=np.float32)
 
     if v_type == VisualizeType.NO_INLIERS:
@@ -27,8 +30,7 @@ def get(cloud, inliers, v_type):
         if v_type == VisualizeType.CONCAVE_HULL:
             print("-------GETTING CONCAVE HULL-------")
             chull = final.make_ConcaveHull()
-            # chull.set_Alpha(0.5)
-            chull.set_Alpha(0.07)
+            chull.set_Alpha(kwargs['alpha'])
             final = chull.reconstruct()
 
     return final
@@ -53,5 +55,5 @@ def setup_segmenter(cloud, x, y, z):
     seg.set_normal_distance_weight(0.005)
     seg.set_max_iterations(500)
     seg.set_axis(x, y, z)
-    seg.set_eps_angle(np.pi/20);
+    seg.set_eps_angle(np.pi / 20)
     return seg

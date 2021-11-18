@@ -2,7 +2,7 @@
 ## PCL Installation
 ### Ubuntu 20.04
 ```
-pip install cython numpy
+pip install cython numpy open3d
 ```
 
 ```
