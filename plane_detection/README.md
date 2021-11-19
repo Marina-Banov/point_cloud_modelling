@@ -1,11 +1,10 @@
 # plane_detection
+This folder contains several Python scripts that extract the most important features of a given pointcloud.
+
 ## PCL Installation
 ### Ubuntu 20.04
 ```
 pip install cython numpy open3d
-```
-
-```
 sudo apt-get update
 sudo apt-get install libpcl-dev
 sudo apt-get install python3-pcl pcl-tools

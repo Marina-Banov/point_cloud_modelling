@@ -89,6 +89,7 @@ The default world is env3. Other available worlds are:
 - empty
 - env8
 - env9
+
 which you can load like this:
 ```
 ros2 launch simulate_realsense_d435i simulate_realsense_d435i.launch.py world:=env8
@@ -103,4 +104,4 @@ Open another terminal and run the following line to start a node similar to [Tur
 ```
 ros2 run simulate_realsense_d435i teleop_keyboard
 ```
-Note that the `get_pcd` node will only process **one** frame after the `S` or `SPACE` key is pressed. Move the Turtlebot around and watch the octomap of the environment being generated. Press `CTRL+C` inside the `get_pcd` terminal to save the pointcloud.
+Note that the `get_pcd` node will only process **ONE** frame after the `S` or `SPACE` key is pressed. Move the Turtlebot around and watch the octomap of the environment being generated. Press `CTRL+C` inside the `get_pcd` terminal to save the pointcloud.

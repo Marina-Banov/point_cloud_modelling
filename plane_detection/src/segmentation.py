@@ -24,42 +24,47 @@ def transform_inliers(inliers):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--file", "-f", type=str, required=True)
-    filename = parser.parse_args().file
+    parser.add_argument("-f", type=str, required=True, metavar="FILE", help="path to a .pcd file")
+    parser.add_argument(
+        "-t", type=int, default=5000, metavar="THRESHOLD",
+        help="minimum number of points a segmented plane should contain, default: 5000"
+    )
+    filename = parser.parse_args().f
+    threshold = parser.parse_args().t
 
     print("-------LOADING PCD-------")
     cloud = pcl.load(filename)
 
-    result_points = np.empty((0,6), dtype=np.float32)
+    print("-------DOWNSAMPLING-------")
+    vg = cloud.make_voxel_grid_filter()
+    vg.set_leaf_size(0.05, 0.05, 0.05)
+    cloud = vg.filter()
 
-    seg = setup_segmenter(cloud, 0, 0, 1)
+    x, y, z = (0, 0, 1)
+    seg = setup_segmenter(cloud, x, y, z)
     indices, coefficients = seg.segment()
     print(coefficients)
     inliers = get(cloud, indices, VisualizeType.ONLY_INLIERS)
     cloud = remove_points(cloud, indices)
+    result_points = np.empty((0, 6), dtype=np.float32)
     result_points = np.append(result_points, transform_inliers(inliers), axis=0)
 
-    for i in range(2):
-        seg = setup_segmenter(cloud, 1, 0, 0)
+    x, y, z = (1, 0, 0)
+    while True:
+        seg = setup_segmenter(cloud, x, y, z)
         indices, coefficients = seg.segment()
         print(coefficients)
 
-        if len(indices) != 0:
+        if len(indices) > threshold:
             inliers = get(cloud, indices, VisualizeType.ONLY_INLIERS)
             cloud = remove_points(cloud, indices)
             result_points = np.append(result_points, transform_inliers(inliers), axis=0)
-
-    for i in range(2):
-        seg = setup_segmenter(cloud, 0, 1, 0)
-        indices, coefficients = seg.segment()
-        print(coefficients)
-
-        if len(indices) != 0:
-            inliers = get(cloud, indices, VisualizeType.ONLY_INLIERS)
-            cloud = remove_points(cloud, indices)
-            result_points = np.append(result_points, transform_inliers(inliers), axis=0)
+            x, y = (y, x)
+        else:
+            break
 
     visualize(result_points)
+
 
 if __name__ == '__main__':
     main()
