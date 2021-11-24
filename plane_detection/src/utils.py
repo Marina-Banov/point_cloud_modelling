@@ -45,6 +45,14 @@ def visualize(points):
     o3d.visualization.draw_geometries([vis])
 
 
+def add_color_to_points(points, color):
+    points = np.asarray(points)
+    res = np.zeros((points.shape[0], 6))
+    res[:, :3] = points
+    res[:, 3:] = color
+    return res
+
+
 def setup_segmenter(cloud, x, y, z):
     print("-------COMPUTING MODEL-------")
     seg = cloud.make_segmenter_normals(ksearch=10)
