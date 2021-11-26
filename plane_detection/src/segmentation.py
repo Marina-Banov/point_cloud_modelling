@@ -2,7 +2,7 @@ import argparse
 import numpy as np
 import pcl
 import pcl.pcl_visualization
-from utils import VisualizeType, get, visualize, setup_segmenter, add_color_to_points
+import utils
 import random
 
 
@@ -13,43 +13,122 @@ def remove_points(cloud, indices):
 
 
 def random_color():
-    return np.array([random.random(), random.random(), random.random()], dtype=np.float32)
+    return np.array([random.random(), random.random(), random.random()],
+                    dtype=np.float32)
 
 
 def segmentation(cloud, threshold=5000):
+    planes = []
+    segmented_cloud = []
+    visualize_points = np.empty((0, 6), dtype=np.float32)
+
     x, y, z = (0, 0, 1)
-    seg = setup_segmenter(cloud, x, y, z)
+    seg = utils.setup_segmenter(cloud, x, y, z)
     indices, coefficients = seg.segment()
-    print(coefficients)
-    inliers = get(cloud, indices, VisualizeType.ONLY_INLIERS)
+    planes.append(coefficients)
+    inliers = utils.get(cloud, indices, utils.VisualizeType.ONLY_INLIERS)
     cloud = remove_points(cloud, indices)
-    result_points = np.empty((0, 6), dtype=np.float32)
-    result_points = np.append(result_points, add_color_to_points(inliers, random_color()), axis=0)
+    segmented_cloud.append(inliers)
+    visualize_points = np.append(
+        visualize_points,
+        utils.add_color_to_points(inliers, random_color()),
+        axis=0
+    )
 
     x, y, z = (1, 0, 0)
     while True:
-        seg = setup_segmenter(cloud, x, y, z)
+        seg = utils.setup_segmenter(cloud, x, y, z)
         indices, coefficients = seg.segment()
 
         if len(indices) > threshold:
-            print(coefficients)
-            inliers = get(cloud, indices, VisualizeType.ONLY_INLIERS)
+            planes.append(coefficients)
+            inliers = utils.get(cloud, indices,
+                                utils.VisualizeType.ONLY_INLIERS)
             cloud = remove_points(cloud, indices)
-            result_points = np.append(result_points, add_color_to_points(inliers, random_color()), axis=0)
-            x, y = (y, x)
+            segmented_cloud.append(inliers)
+            visualize_points = np.append(
+                visualize_points,
+                utils.add_color_to_points(inliers, random_color()),
+                axis=0
+            )
+            x, y = y, x
         else:
             break
 
-    visualize(result_points)
-    return result_points
+    utils.visualize(visualize_points)
+    return planes, segmented_cloud
+
+
+def intersection(planes):
+    corners = []
+
+    for i in range(1, len(planes), 2):
+        for j in range(2, len(planes), 2):
+            A = [planes[0][:3], planes[i][:3], planes[j][:3]]
+            B = [-planes[0][3], -planes[i][3], -planes[j][3]]
+            corner = np.linalg.solve(A, B)
+            print(corner)
+            corners.append(list(corner))
+
+    corners = np.asarray(corners)
+    utils.visualize(corners)
+
+    return corners
+
+
+def get_net(corners):
+    passed = list(range(len(corners)))
+    keep = {}
+    for i in passed:
+        keep[str(i)] = [[], [], [], []]
+
+    i = 0
+    while len(passed) > 0:
+        passed.remove(i)
+        f = i
+        for j in passed:
+            diff_x = corners[i, 0] - corners[j, 0]
+            diff_y = corners[i, 1] - corners[j, 1]
+            if 0 < diff_x < 0.1:
+                keep[str(i)][0].append((abs(diff_x), j))
+                keep[str(j)][1].append((abs(diff_x), i))
+                f = j
+            if 0 >= diff_x > -0.1:
+                keep[str(i)][1].append((abs(diff_x), j))
+                keep[str(j)][0].append((abs(diff_x), i))
+                f = j
+            if 0 < diff_y < 0.1:
+                keep[str(i)][2].append((abs(diff_y), j))
+                keep[str(j)][3].append((abs(diff_y), i))
+                f = j
+            if 0 >= diff_y > -0.1:
+                keep[str(i)][3].append((abs(diff_y), j))
+                keep[str(j)][2].append((abs(diff_y), i))
+                f = j
+        i = f
+
+    result = []
+    for key, directions in keep.items():
+        for d in directions:
+            if len(d) == 0:
+                continue
+            min_diff = min(d)[1]
+            if (int(key), min_diff) not in result and (
+                    min_diff, int(key)) not in result:
+                result.append((int(key), min_diff))
+    return result
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-f", type=str, required=True, metavar="FILE", help="path to a .pcd file")
+    parser.add_argument(
+        "-f", type=str, required=True, metavar="FILE",
+        help="path to a .pcd file"
+    )
     parser.add_argument(
         "-t", type=int, default=5000, metavar="THRESHOLD",
-        help="minimum number of points a segmented plane should contain, default: 5000"
+        help="minimum number of points a segmented plane should contain, "
+             "default: 5000"
     )
     filename = parser.parse_args().f
     threshold = parser.parse_args().t
@@ -62,7 +141,10 @@ def main():
     vg.set_leaf_size(0.05, 0.05, 0.05)
     cloud = vg.filter()
 
-    segmentation(cloud, threshold)
+    planes, _ = segmentation(cloud, threshold)
+    corners = intersection(planes)
+    net = get_net(corners)
+    print(net)
 
 
 if __name__ == '__main__':

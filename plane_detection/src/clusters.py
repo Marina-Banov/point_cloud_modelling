@@ -1,14 +1,14 @@
 import argparse
 import pcl
 import numpy as np
-from utils import visualize, get, VisualizeType, setup_segmenter
+import utils
 
 
 def clusters(cloud):
-    seg = setup_segmenter(cloud, 0, 0, 1)
+    seg = utils.setup_segmenter(cloud, 0, 0, 1)
     indices, coefficients = seg.segment()
     print(coefficients)
-    cloud = get(cloud, indices, VisualizeType.CONCAVE_HULL)
+    cloud = utils.get(cloud, indices, utils.VisualizeType.CONCAVE_HULL)
 
     print("-------KDTREE-------")
     tree = cloud.make_kdtree()
@@ -30,7 +30,7 @@ def clusters(cloud):
             points[i][1] = cloud[index][1]
             points[i][2] = cloud[index][2]
 
-        visualize(points)
+        utils.visualize(points)
         cloud_cluster.from_array(points)
         clusters_array.append(cloud_cluster)
         pcl.save(cloud_cluster, f'cloud_cluster_{j}.pcd')
@@ -40,7 +40,10 @@ def clusters(cloud):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-f", type=str, required=True, metavar="FILE", help="path to a .pcd file")
+    parser.add_argument(
+        "-f", type=str, required=True, metavar="FILE",
+        help="path to a .pcd file"
+    )
     filename = parser.parse_args().f
 
     print("-------LOADING PCD-------")
