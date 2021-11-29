@@ -142,6 +142,30 @@ def edge_exists(point_a, point_b, segmented_cloud):
     return False
 
 
+def get_polygon_indices(net):
+    result = []
+
+    while len(net) > 0:
+        start_corner, next_corner = net[0]
+        polygon = [start_corner]
+        del net[0]
+
+        while next_corner != start_corner:
+            found = [(i, item) for i, item in enumerate(net) if next_corner in
+                     item]
+            if len(found) == 0:
+                break
+            index, item = found[0]
+            polygon.append(next_corner)
+            next_corner = net[index][1 if item[0] == next_corner else 0]
+            del net[index]
+
+        polygon.append(start_corner)
+        result.append(polygon)
+
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -149,9 +173,9 @@ def main():
         help="path to a .pcd file"
     )
     parser.add_argument(
-        "-t", type=int, default=5000, metavar="THRESHOLD",
+        "-t", type=int, default=100, metavar="THRESHOLD",
         help="minimum number of points a segmented plane should contain, "
-             "default: 5000"
+             "default: 100"
     )
     filename = parser.parse_args().f
     threshold = parser.parse_args().t
@@ -167,6 +191,9 @@ def main():
     planes, segmented_cloud = segmentation(cloud, threshold)
     corners = intersection(planes)
     net = get_net(corners, segmented_cloud)
+    polygon_indices = get_polygon_indices(net)
+    for p in polygon_indices:
+        print(corners[p])
 
 
 if __name__ == '__main__':
