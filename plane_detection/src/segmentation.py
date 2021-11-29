@@ -55,7 +55,7 @@ def segmentation(cloud, threshold=5000):
         else:
             break
 
-    utils.visualize(visualize_points)
+    # utils.visualize(visualize_points)
     return planes, segmented_cloud
 
 
@@ -67,16 +67,15 @@ def intersection(planes):
             A = [planes[0][:3], planes[i][:3], planes[j][:3]]
             B = [-planes[0][3], -planes[i][3], -planes[j][3]]
             corner = np.linalg.solve(A, B)
-            print(corner)
             corners.append(list(corner))
 
     corners = np.asarray(corners)
-    utils.visualize(corners)
+    # utils.visualize(corners)
 
     return corners
 
 
-def get_net(corners):
+def get_net(corners, planes):
     passed = list(range(len(corners)))
     keep = {}
     for i in passed:
@@ -114,9 +113,33 @@ def get_net(corners):
                 continue
             min_diff = min(d)[1]
             if (int(key), min_diff) not in result and (
-                    min_diff, int(key)) not in result:
+                min_diff, int(key)) not in result and edge_exists(
+                    corners[int(key)], corners[min_diff], planes):
                 result.append((int(key), min_diff))
     return result
+
+
+def edge_exists(point_a, point_b, segmented_cloud):
+    if abs(point_a[0] - point_b[0]) <= 0.1:
+        middle = (point_a[1] + point_b[1]) / 2
+        for i in range(1, len(segmented_cloud), 2):
+            p = np.asarray(segmented_cloud[i])
+            together = np.where((abs(p[:, 1] - middle) <= 0.1) &
+                                (abs(p[:, 0] - point_b[0]) <= 0.1) &
+                                (abs(p[:, 0] - point_a[0]) <= 0.1))[0]
+            if len(together) > 0:
+                return True
+    elif abs(point_a[1] - point_b[1]) <= 0.1:
+        middle = (point_a[0] + point_b[0]) / 2
+        for i in range(2, len(segmented_cloud), 2):
+            p = np.asarray(segmented_cloud[i])
+            together = np.where((abs(p[:, 0] - middle) <= 0.1) &
+                                (abs(p[:, 1] - point_b[1]) <= 0.1) &
+                                (abs(p[:, 1] - point_a[1]) <= 0.1))[0]
+            if len(together) > 0:
+                return True
+
+    return False
 
 
 def main():
@@ -141,10 +164,9 @@ def main():
     vg.set_leaf_size(0.05, 0.05, 0.05)
     cloud = vg.filter()
 
-    planes, _ = segmentation(cloud, threshold)
+    planes, segmented_cloud = segmentation(cloud, threshold)
     corners = intersection(planes)
-    net = get_net(corners)
-    print(net)
+    net = get_net(corners, segmented_cloud)
 
 
 if __name__ == '__main__':
