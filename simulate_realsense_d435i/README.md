@@ -89,6 +89,7 @@ The default world is env3. Other available worlds are:
 - empty
 - env8
 - env9
+- house
 
 which you can load like this:
 ```
