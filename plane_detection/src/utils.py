@@ -53,15 +53,23 @@ def add_color_to_points(points, color):
     return res
 
 
-def setup_segmenter(cloud, x, y, z):
-    print("-------COMPUTING MODEL-------")
-    seg = cloud.make_segmenter_normals(ksearch=10)
+def setup_segmenter(cloud, x, y, z, **kwargs):
+    default_kwargs = {
+        'ksearch': 20,
+        'distance_threshold': 0.2,
+        'normal_distance_weight': 0.0001,
+        'max_iterations': 1000,
+        'eps_angle': np.pi / 90,
+    }
+    kwargs = {**default_kwargs, **kwargs}
+
+    seg = cloud.make_segmenter_normals(ksearch=kwargs['ksearch'])
     seg.set_optimize_coefficients(True)
     seg.set_model_type(pcl.SACMODEL_PERPENDICULAR_PLANE)
     seg.set_method_type(pcl.SAC_RANSAC)
-    seg.set_distance_threshold(0.1)
-    seg.set_normal_distance_weight(0.005)
-    seg.set_max_iterations(500)
+    seg.set_distance_threshold(kwargs['distance_threshold'])
+    seg.set_normal_distance_weight(kwargs['normal_distance_weight'])
+    seg.set_max_iterations(kwargs['max_iterations'])
     seg.set_axis(x, y, z)
-    seg.set_eps_angle(np.pi / 20)
+    seg.set_eps_angle(kwargs['eps_angle'])
     return seg

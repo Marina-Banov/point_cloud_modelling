@@ -55,7 +55,7 @@ def segmentation(cloud, threshold=5000):
         else:
             break
 
-    # utils.visualize(visualize_points)
+    utils.visualize(visualize_points)
     return planes, segmented_cloud
 
 
@@ -70,7 +70,7 @@ def intersection(planes):
             corners.append(list(corner))
 
     corners = np.asarray(corners)
-    # utils.visualize(corners)
+    utils.visualize(corners)
 
     return corners
 
@@ -83,7 +83,10 @@ def get_net(corners, planes):
 
     i = 0
     while len(passed) > 0:
-        passed.remove(i)
+        try:
+            passed.remove(i)
+        except Exception as e:
+            break
         f = i
         for j in passed:
             diff_x = corners[i, 0] - corners[j, 0]
@@ -128,7 +131,7 @@ def edge_exists(point_a, point_b, segmented_cloud):
                                 (abs(p[:, 0] - point_b[0]) <= 0.1) &
                                 (abs(p[:, 0] - point_a[0]) <= 0.1))[0]
             if len(together) > 0:
-                return True
+                return True  # get min and max z height for edge
     elif abs(point_a[1] - point_b[1]) <= 0.1:
         middle = (point_a[0] + point_b[0]) / 2
         for i in range(2, len(segmented_cloud), 2):
@@ -137,7 +140,7 @@ def edge_exists(point_a, point_b, segmented_cloud):
                                 (abs(p[:, 1] - point_b[1]) <= 0.1) &
                                 (abs(p[:, 1] - point_a[1]) <= 0.1))[0]
             if len(together) > 0:
-                return True
+                return True  # get min and max z height for edge
 
     return False
 
