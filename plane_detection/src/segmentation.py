@@ -4,6 +4,7 @@ import pcl
 import pcl.pcl_visualization
 import utils
 import random
+import json
 
 
 def remove_points(cloud, indices):
@@ -169,6 +170,23 @@ def get_polygon_indices(net):
     return result
 
 
+def save_json(filename, polygons, corners):
+    data = {}
+    data["name"] = (filename.split('\\')[-1]).split('.')[0]
+    data["definition"] = {
+        "positivemeshes": [],
+        "negativemeshes": []
+    }
+    for p in polygons:
+        data["definition"]["positivemeshes"].append({
+            "polygon": corners[p][:,:2].tolist(),
+            "bottom": 0.0,
+            "top": 0.0,
+        })
+    with open('data.json', 'w') as outfile:
+        json.dump(data, outfile, indent=4)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -195,8 +213,7 @@ def main():
     corners = intersection(planes)
     net = get_net(corners, segmented_cloud)
     polygon_indices = get_polygon_indices(net)
-    for p in polygon_indices:
-        print(corners[p])
+    save_json(filename, polygon_indices, corners)
 
 
 if __name__ == '__main__':
