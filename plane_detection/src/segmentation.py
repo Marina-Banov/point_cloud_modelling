@@ -5,6 +5,7 @@ import pcl.pcl_visualization
 import utils
 import random
 import json
+from shapely.geometry import Polygon
 
 
 def remove_points(cloud, indices):
@@ -68,6 +69,7 @@ def intersection(planes):
             A = [planes[0][:3], planes[i][:3], planes[j][:3]]
             B = [-planes[0][3], -planes[i][3], -planes[j][3]]
             corner = np.linalg.solve(A, B)
+            # TODO what if corner doesn't exist ?
             corners.append(list(corner))
 
     corners = np.asarray(corners)
@@ -86,7 +88,7 @@ def get_net(corners, planes):
     while len(passed) > 0:
         try:
             passed.remove(i)
-        except Exception as e:
+        except ValueError as _:
             break
         f = i
         for j in passed:
@@ -132,7 +134,7 @@ def edge_exists(point_a, point_b, segmented_cloud):
                                 (abs(p[:, 0] - point_b[0]) <= 0.1) &
                                 (abs(p[:, 0] - point_a[0]) <= 0.1))[0]
             if len(together) > 0:
-                return True  # get min and max z height for edge
+                return True  # TODO get min and max z height for edge
     elif abs(point_a[1] - point_b[1]) <= 0.1:
         middle = (point_a[0] + point_b[0]) / 2
         for i in range(2, len(segmented_cloud), 2):
@@ -141,7 +143,7 @@ def edge_exists(point_a, point_b, segmented_cloud):
                                 (abs(p[:, 1] - point_b[1]) <= 0.1) &
                                 (abs(p[:, 1] - point_a[1]) <= 0.1))[0]
             if len(together) > 0:
-                return True  # get min and max z height for edge
+                return True  # TODO get min and max z height for edge
 
     return False
 
@@ -171,15 +173,26 @@ def get_polygon_indices(net):
 
 
 def save_json(filename, polygons, corners):
-    data = {}
-    data["name"] = (filename.split('\\')[-1]).split('.')[0]
-    data["definition"] = {
-        "positivemeshes": [],
-        "negativemeshes": []
+    data = {
+        "name": (filename.split('\\')[-1]).split('.')[0],
+        "definition": {
+            "positivemeshes": [],
+            "negativemeshes": []
+        }
     }
-    for p in polygons:
-        data["definition"]["positivemeshes"].append({
-            "polygon": corners[p][:,:2].tolist(),
+
+    for i in range(len(polygons)):
+        mesh_type = "positivemeshes"
+        p_i = Polygon(corners[polygons[i]][:, :2])
+        for j in range(len(polygons)):
+            if i == j:
+                continue
+            p_j = Polygon(corners[polygons[j]][:, :2])
+            if p_i.covered_by(p_j):
+                mesh_type = "negativemeshes"
+                break
+        data["definition"][mesh_type].append({
+            "polygon": corners[polygons[i]][:, :2].tolist(),
             "bottom": 0.0,
             "top": 0.0,
         })
