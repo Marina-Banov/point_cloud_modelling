@@ -37,7 +37,7 @@ def segmentation(cloud, threshold=5000):
         axis=0
     )
 
-    x, y, z = (1, 0, 0)
+    x, y, z = (0, 1, 0)
     while True:
         seg = utils.setup_segmenter(cloud, x, y, z)
         indices, coefficients = seg.segment()
@@ -118,41 +118,51 @@ def get_net(corners, planes):
             if len(d) == 0:
                 continue
             min_diff = min(d)[1]
-            if (int(key), min_diff) not in result and (
-                min_diff, int(key)) not in result and edge_exists(
-                    corners[int(key)], corners[min_diff], planes):
-                result.append((int(key), min_diff))
+
+            already = False
+            for r_i, r_j, _, _ in result:
+                if (r_i, r_j) in [(int(key), min_diff), (min_diff, int(key))]:
+                    already = True
+            if already:
+                continue
+            try:
+                heights = edge_exists(corners[int(key)], corners[min_diff],
+                                      planes)
+                result.append((int(key), min_diff, heights[0], heights[1]))
+            except RuntimeError as _:
+                continue
+
     return result
 
 
 def edge_exists(point_a, point_b, segmented_cloud):
     if abs(point_a[0] - point_b[0]) <= 0.1:
         middle = (point_a[1] + point_b[1]) / 2
-        for i in range(1, len(segmented_cloud), 2):
+        for i in range(2, len(segmented_cloud), 2):
             p = np.asarray(segmented_cloud[i])
             together = np.where((abs(p[:, 1] - middle) <= 0.1) &
                                 (abs(p[:, 0] - point_b[0]) <= 0.1) &
                                 (abs(p[:, 0] - point_a[0]) <= 0.1))[0]
             if len(together) > 0:
-                return True  # TODO get min and max z height for edge
+                return np.amin(p, axis=0)[2], np.amax(p, axis=0)[2]
     elif abs(point_a[1] - point_b[1]) <= 0.1:
         middle = (point_a[0] + point_b[0]) / 2
-        for i in range(2, len(segmented_cloud), 2):
+        for i in range(1, len(segmented_cloud), 2):
             p = np.asarray(segmented_cloud[i])
             together = np.where((abs(p[:, 0] - middle) <= 0.1) &
                                 (abs(p[:, 1] - point_b[1]) <= 0.1) &
                                 (abs(p[:, 1] - point_a[1]) <= 0.1))[0]
             if len(together) > 0:
-                return True  # TODO get min and max z height for edge
+                return np.amin(p, axis=0)[2], np.amax(p, axis=0)[2]
 
-    return False
+    raise RuntimeError("Edge doesn't exist")
 
 
 def get_polygon_indices(net):
     result = []
 
     while len(net) > 0:
-        start_corner, next_corner = net[0]
+        start_corner, next_corner, min_h_p, max_h_p = net[0]
         polygon = [start_corner]
         del net[0]
 
@@ -161,13 +171,22 @@ def get_polygon_indices(net):
                      item]
             if len(found) == 0:
                 break
-            index, item = found[0]
+            if len(found) == 1:
+                index, item = found[0]  # TODO not good!
+            else:
+                input_str = f'{polygon} + ' \
+                            f'{[(f_i, (f[0], f[1])) for f_i, f in found]}: '
+                index = int(input(input_str))
+                item = net[index]
             polygon.append(next_corner)
             next_corner = net[index][1 if item[0] == next_corner else 0]
+            min_h_p = min(min_h_p, item[2])
+            max_h_p = max(max_h_p, item[3])
             del net[index]
 
-        polygon.append(start_corner)
-        result.append(polygon)
+        if len(polygon) > 2:
+            polygon.append(start_corner)
+            result.append((polygon, min_h_p, max_h_p))
 
     return result
 
@@ -183,18 +202,18 @@ def save_json(filename, polygons, corners):
 
     for i in range(len(polygons)):
         mesh_type = "positivemeshes"
-        p_i = Polygon(corners[polygons[i]][:, :2])
+        p_i = Polygon(corners[polygons[i][0]][:, :2])
         for j in range(len(polygons)):
             if i == j:
                 continue
-            p_j = Polygon(corners[polygons[j]][:, :2])
+            p_j = Polygon(corners[polygons[j][0]][:, :2])
             if p_i.covered_by(p_j):
                 mesh_type = "negativemeshes"
                 break
         data["definition"][mesh_type].append({
-            "polygon": corners[polygons[i]][:, :2].tolist(),
-            "bottom": 0.0,
-            "top": 0.0,
+            "polygon": np.round(corners[polygons[i][0]][:, :2], 5).tolist(),
+            "bottom": round(float(polygons[i][1]), 5),
+            "top": round(float(polygons[i][2]), 5),
         })
     with open('data.json', 'w') as outfile:
         json.dump(data, outfile, indent=4)
@@ -224,8 +243,11 @@ def main():
 
     planes, segmented_cloud = segmentation(cloud, threshold)
     corners = intersection(planes)
+    print(corners)
     net = get_net(corners, segmented_cloud)
+    print([(f[0], f[1]) for f in net])
     polygon_indices = get_polygon_indices(net)
+    print(polygon_indices)
     save_json(filename, polygon_indices, corners)
 
 

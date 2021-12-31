@@ -56,7 +56,7 @@ def add_color_to_points(points, color):
 def setup_segmenter(cloud, x, y, z, **kwargs):
     default_kwargs = {
         'ksearch': 20,
-        'distance_threshold': 0.1,
+        'distance_threshold': 0.07,
         'normal_distance_weight': 0.01,
         'max_iterations': 1500,
         'eps_angle': np.pi / 90,
