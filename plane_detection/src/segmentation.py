@@ -37,7 +37,7 @@ def segmentation(cloud, threshold=5000):
         axis=0
     )
 
-    x, y, z = (0, 1, 0)
+    x, y, z = (1, 0, 0)
     while True:
         seg = utils.setup_segmenter(cloud, x, y, z)
         indices, coefficients = seg.segment()
@@ -138,7 +138,7 @@ def get_net(corners, planes):
 def edge_exists(point_a, point_b, segmented_cloud):
     if abs(point_a[0] - point_b[0]) <= 0.1:
         middle = (point_a[1] + point_b[1]) / 2
-        for i in range(2, len(segmented_cloud), 2):
+        for i in range(1, len(segmented_cloud), 2):
             p = np.asarray(segmented_cloud[i])
             together = np.where((abs(p[:, 1] - middle) <= 0.1) &
                                 (abs(p[:, 0] - point_b[0]) <= 0.1) &
@@ -147,7 +147,7 @@ def edge_exists(point_a, point_b, segmented_cloud):
                 return np.amin(p, axis=0)[2], np.amax(p, axis=0)[2]
     elif abs(point_a[1] - point_b[1]) <= 0.1:
         middle = (point_a[0] + point_b[0]) / 2
-        for i in range(1, len(segmented_cloud), 2):
+        for i in range(2, len(segmented_cloud), 2):
             p = np.asarray(segmented_cloud[i])
             together = np.where((abs(p[:, 0] - middle) <= 0.1) &
                                 (abs(p[:, 1] - point_b[1]) <= 0.1) &

@@ -16,11 +16,10 @@ def main():
     cloud = pcl.load(filename)
     cloud_points = np.full((cloud.size, 3), cloud, dtype=np.float32)
     finalpoints = np.delete(cloud_points,
-                            np.where((cloud_points[:, 0] < -8.5) |
-                                     (cloud_points[:, 1] > -1.6))[0],
+                            np.where(cloud_points[:, 0] < -3.1)[0],
                             axis=0)
     cloud = pcl.PointCloud(finalpoints)
-    cloud.to_file("20211201114059_.pcd".encode('utf-8'), ascii=False)
+    cloud.to_file("20211201115803_.pcd".encode('utf-8'), ascii=False)
 
     print("-------DOWNSAMPLING-------")
     vg = cloud.make_voxel_grid_filter()
