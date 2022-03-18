@@ -31,7 +31,7 @@ ros2 run turtlebot3_teleop teleop_keyboard
 ros2 launch turtlebot3_bringup rviz2.launch.py
 ```
 
-Install Realsense dependencies
+Install [Intel RealSense SDK](https://github.com/IntelRealSense/librealsense) and [Intel RealSense ROS wrapper](https://github.com/IntelRealSense/realsense-ros)
 ```
 sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE || sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE
 sudo add-apt-repository "deb https://librealsense.intel.com/Debian/apt-repo $(lsb_release -cs) main" -u
@@ -51,7 +51,7 @@ Check if everything is working
 ros2 launch realsense2_description view_model.launch.py model:=test_d435i_camera.urdf.xacro
 ```
 
-Install Realsense Gazebo plugin
+Install [Intel RealSense Gazebo plugin](https://github.com/pal-robotics/realsense_gazebo_plugin)
 ```
 cd colcon_ws/src/
 git clone -b foxy-devel https://github.com/pal-robotics/realsense_gazebo_plugin
