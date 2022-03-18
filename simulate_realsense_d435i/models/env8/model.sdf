@@ -1,7 +1,6 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
   <model name='env8'>
-    <pose>2.425 -2.425 0 0 -0 0</pose>
     <link name='Wall_10'>
       <collision name='Wall_10_Collision'>
         <geometry>
@@ -29,7 +28,7 @@
           <layer>0</layer>
         </meta>
       </visual>
-      <pose>-0.425 -1 0 0 -0 -1.5708</pose>
+      <pose>-0.425 -1 1.25 0 0 -1.5708</pose>
     </link>
     <link name='Wall_11'>
       <collision name='Wall_11_Collision'>
@@ -58,7 +57,7 @@
           <layer>0</layer>
         </meta>
       </visual>
-      <pose>-1.425 -2.425 0 0 -0 3.14159</pose>
+      <pose>-1.425 -2.425 1.25 0 -0 3.14159</pose>
     </link>
     <link name='Wall_12'>
       <collision name='Wall_12_Collision'>
@@ -87,7 +86,7 @@
           <layer>0</layer>
         </meta>
       </visual>
-      <pose>-2.425 0 0 0 -0 1.5708</pose>
+      <pose>-2.425 0 1.25 0 -0 1.5708</pose>
     </link>
     <link name='Wall_5'>
       <collision name='Wall_5_Collision'>
@@ -116,7 +115,7 @@
           <layer>0</layer>
         </meta>
       </visual>
-      <pose>0 2.425 0 0 -0 0</pose>
+      <pose>0 2.425 1.25 0 -0 0</pose>
     </link>
     <link name='Wall_6'>
       <collision name='Wall_6_Collision'>
@@ -145,7 +144,7 @@
           <layer>0</layer>
         </meta>
       </visual>
-      <pose>2.425 0 0 0 -0 -1.5708</pose>
+      <pose>2.425 0 1.25 0 0 -1.5708</pose>
     </link>
     <link name='Wall_7'>
       <collision name='Wall_7_Collision'>
@@ -174,7 +173,7 @@
           <layer>0</layer>
         </meta>
       </visual>
-      <pose>1.425 -2.425 0 0 -0 3.14159</pose>
+      <pose>1.425 -2.425 1.25 0 -0 3.14159</pose>
     </link>
     <link name='Wall_8'>
       <collision name='Wall_8_Collision'>
@@ -203,7 +202,7 @@
           <layer>0</layer>
         </meta>
       </visual>
-      <pose>0.425 -1 0 0 -0 1.5708</pose>
+      <pose>0.425 -1 1.25 0 -0 1.5708</pose>
     </link>
     <link name='Wall_9'>
       <collision name='Wall_9_Collision'>
@@ -232,7 +231,7 @@
           <layer>0</layer>
         </meta>
       </visual>
-      <pose>0 0.425 0 0 -0 3.14159</pose>
+      <pose>0 0.425 1.25 0 -0 3.14159</pose>
     </link>
     <static>1</static>
   </model>

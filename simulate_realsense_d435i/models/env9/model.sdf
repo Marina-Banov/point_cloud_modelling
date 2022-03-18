@@ -14,7 +14,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>0.731205 -0.728617 1.25 0 -0 0</pose>
+      <pose>0.731205 -0.728617 2.5 0 -0 0</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -100,7 +100,7 @@
       </collision>
     </link>
     <model name='weird_room'>
-      <pose>-0.731206 0.728617 -1.25 0 -0 0</pose>
+      <pose>-0.731206 0.728617 0 0 -0 0</pose>
       <link name='Wall_0'>
         <collision name='Wall_0_Collision'>
           <geometry>
