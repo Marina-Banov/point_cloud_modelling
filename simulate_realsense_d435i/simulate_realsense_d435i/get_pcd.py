@@ -3,6 +3,8 @@ import numpy as np
 import open3d as o3d
 import transformations as tfs
 import rclpy
+import threading
+import os
 from . import utils
 from rclpy.node import Node
 from rclpy.duration import Duration
@@ -30,6 +32,24 @@ def get_transform_matrices(transform):
     return np.around(tfs.concatenate_matrices(Rx, Ry, Rz), 5), np.around(tfs.translation_matrix(Vt), 5)
 
 
+def handle_keyboard(node):
+    while True:
+        print('\n- Simple Publisher Menu -')
+        print('Press S to process frame')
+        print('Press 99 to save pointcloud and exit')
+
+        menu = input('Input the menu: ')
+        print(f'menu = {menu}**********')
+
+        if menu == 's':
+            node.toggle_flag()
+        elif menu == '99':
+            if node.points:
+                node.save_pcd()
+            rclpy.shutdown()
+            os._exit(1)
+
+
 class GetPcdNode(Node):
     def __init__(self):
         super().__init__('get_pcd')
@@ -43,14 +63,9 @@ class GetPcdNode(Node):
             10
         )
         self.flag = True
-        self.create_subscription(
-            Bool,
-            '/break',
-            self.toggle_flag,
-            10
-        )
-
-    def toggle_flag(self, data):
+        self.processing = False
+        
+    def toggle_flag(self):
         time.sleep(1)
         self.flag = True
 
@@ -68,6 +83,7 @@ class GetPcdNode(Node):
         if not self.flag:
             return
         self.flag = False
+        self.processing = True
         self.get_logger().info(f"Processing frame...")
 
         trans = self.get_transform(SOURCE_FRAME_ID, TARGET_FRAME_ID, data.header.stamp)
@@ -88,6 +104,7 @@ class GetPcdNode(Node):
         self.points.update(new_points)
 
         self.get_logger().info(f"Frame processed")
+        self.processing = False
 
     def save_pcd(self):
         try:
@@ -106,14 +123,18 @@ class GetPcdNode(Node):
 def main(args=None):
     rclpy.init(args=args)
     get_pcd_node = GetPcdNode()
+    
+    th = threading.Thread(target=handle_keyboard, args=(get_pcd_node,))
+    th.start()
 
     try:
         rclpy.spin(get_pcd_node)
     except KeyboardInterrupt:
         if get_pcd_node.points:
             get_pcd_node.save_pcd()
-
-    rclpy.shutdown()
+    finally:
+        get_pcd_node.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == '__main__':

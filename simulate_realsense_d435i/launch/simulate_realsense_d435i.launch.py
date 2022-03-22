@@ -84,17 +84,9 @@ def generate_launch_description():
         arguments = [urdf],
     )
 
-    teleop_keyboard = Node(
-        name="teleop_keyboard",
-        package="turtlebot3_teleop",
-        executable="teleop_keyboard",
-        namespace="",
-        output="screen",
-    )
-
     gazebo_server = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(PKG_GAZEBO_ROS, "launch", "gzserver.launch.py")),
-        launch_arguments={ "world": [PKG_THIS, "/worlds/", world, ".world"] }.items(),
+        launch_arguments={ "world": [PKG_THIS, "/sdf/worlds/", world, "_world.sdf"] }.items(),
     )
 
     gazebo_client = IncludeLaunchDescription(
@@ -117,7 +109,6 @@ def generate_launch_description():
     return launch.LaunchDescription([
         rviz_node,
         robot_state_publisher,
-        teleop_keyboard,
         gazebo_server,
         # gazebo_client,
         gazebo_sim_time,

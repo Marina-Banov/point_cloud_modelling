@@ -73,7 +73,7 @@ colcon build && . install/setup.bash
 ```
 cd ~/colcon_ws/src/
 git clone https://github.com/Marina-Banov/pcl-get-mesh.git
-echo 'export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:~/colcon_ws/src/pcl-get-mesh/simulate_realsense_d435i/models' >> ~/.bashrc
+echo 'export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:~/colcon_ws/src/pcl-get-mesh/simulate_realsense_d435i/sdf/models' >> ~/.bashrc
 source ~/.bashrc
 cd ~/colcon_ws/
 sudo apt install ros-foxy-sensor-msgs-py pcl-tools
