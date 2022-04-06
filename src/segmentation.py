@@ -3,7 +3,6 @@ import numpy as np
 import pcl
 import pcl.pcl_visualization
 import utils
-import random
 import json
 from shapely.geometry import Polygon
 
@@ -12,11 +11,6 @@ def remove_points(cloud, indices):
     cloud_points = np.full((cloud.size, 3), cloud, dtype=np.float32)
     finalpoints = np.delete(cloud_points, indices, axis=0)
     return pcl.PointCloud(finalpoints)
-
-
-def random_color():
-    return np.array([random.random(), random.random(), random.random()],
-                    dtype=np.float32)
 
 
 def segmentation(cloud, threshold=5000):
@@ -33,7 +27,7 @@ def segmentation(cloud, threshold=5000):
     segmented_cloud.append(inliers)
     visualize_points = np.append(
         visualize_points,
-        utils.add_color_to_points(inliers, random_color()),
+        utils.add_color_to_points(inliers, utils.random_color()),
         axis=0
     )
 
@@ -50,7 +44,7 @@ def segmentation(cloud, threshold=5000):
             segmented_cloud.append(inliers)
             visualize_points = np.append(
                 visualize_points,
-                utils.add_color_to_points(inliers, random_color()),
+                utils.add_color_to_points(inliers, utils.random_color()),
                 axis=0
             )
             x, y = y, x

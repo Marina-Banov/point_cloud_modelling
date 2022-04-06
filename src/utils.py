@@ -3,6 +3,7 @@ import numpy as np
 import pcl
 import pcl.pcl_visualization
 import open3d as o3d
+import random
 
 
 class VisualizeType(Enum):
@@ -36,12 +37,21 @@ def get(cloud, inliers, v_type, **kwargs):
     return final
 
 
+def random_color():
+    return np.array([random.random(), random.random(), random.random()],
+                    dtype=np.float32)
+
+
 def visualize(points):
     print("-------VISUALIZING-------")
     vis = o3d.geometry.PointCloud()
     vis.points = o3d.utility.Vector3dVector(list(points[:, :3]))
     if points.shape[1] == 6:
         vis.colors = o3d.utility.Vector3dVector(list(points[:, 3:]))
+    else:
+        search_param = o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30)
+        o3d.geometry.estimate_normals(vis, search_param)
+        vis.paint_uniform_color(random_color())
     o3d.visualization.draw_geometries([vis])
 
 

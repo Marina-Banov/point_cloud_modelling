@@ -17,7 +17,7 @@ def main():
 
     print("-------DOWNSAMPLING-------")
     vg = cloud.make_voxel_grid_filter()
-    vg.set_leaf_size(0.05, 0.05, 0.05)
+    vg.set_leaf_size(0.03, 0.03, 0.03)
     cloud = vg.filter()
 
     utils.visualize(np.asarray(cloud))

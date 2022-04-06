@@ -4,7 +4,7 @@ This project contains several Python scripts that extract the most important fea
 ## PCL Installation
 ### Ubuntu 20.04
 ```
-pip install cython numpy open3d
+pip install cython numpy open3d shapely
 sudo apt-get update
 sudo apt-get install libpcl-dev
 sudo apt-get install python3-pcl pcl-tools
@@ -27,7 +27,7 @@ sudo apt-get install python3-pcl pcl-tools
   env\Scripts\activate
   ```
 - ```
-  pip install cython numpy open3d-python
+  pip install cython numpy open3d-python shapely
   pip install --upgrade setuptools prompt-toolkit==2.0.1
   ```
 - download [python-pcl](https://github.com/strawlab/python-pcl/releases), unzip into `env\Lib\site-packages` and position yourself inside that folder
