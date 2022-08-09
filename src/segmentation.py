@@ -58,13 +58,20 @@ def segmentation(cloud, threshold=5000):
 def intersection(planes):
     corners = []
 
+    # env9
+    # for i in range(1, len(planes)):
+    #     for j in range(i+1, len(planes)):
+
     for i in range(1, len(planes), 2):
         for j in range(2, len(planes), 2):
             A = [planes[0][:3], planes[i][:3], planes[j][:3]]
             B = [-planes[0][3], -planes[i][3], -planes[j][3]]
-            corner = np.linalg.solve(A, B)
-            # TODO what if corner doesn't exist ?
-            corners.append(list(corner))
+            try:
+                corner = np.linalg.solve(A, B)
+                if abs(corner[0]) < 20 and abs(corner[1]) < 20:
+                    corners.append(list(corner))
+            except np.linalg.LinAlgError as _:
+                continue
 
     corners = np.asarray(corners)
     utils.visualize(corners)
@@ -106,7 +113,7 @@ def get_net(corners, planes):
                 f = j
         i = f
 
-    result = []
+    result = []  # result = [(11,8,0.5,1)] # env8
     for key, directions in keep.items():
         for d in directions:
             if len(d) == 0:
@@ -234,6 +241,8 @@ def main():
     vg = cloud.make_voxel_grid_filter()
     vg.set_leaf_size(0.05, 0.05, 0.05)
     cloud = vg.filter()
+
+    # print("--- %s points ---" % cloud.size)
 
     planes, segmented_cloud = segmentation(cloud, threshold)
     corners = intersection(planes)
